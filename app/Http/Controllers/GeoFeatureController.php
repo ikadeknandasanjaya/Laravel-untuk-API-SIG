@@ -107,8 +107,21 @@ class GeoFeatureController extends Controller
             ], 422);
         }
         
+        // Get authenticated user ID or use the first user in database
+        $userId = Auth::id();
+        if (!$userId) {
+            $userId = \App\Models\User::first()->id ?? null;
+        }
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No user found. Please create a user first.'
+            ], 400);
+        }
+        
         $feature = GeoFeature::create([
-            'user_id' => Auth::id() ?? 1, // Default to user 1 if not authenticated
+            'user_id' => $userId,
             'nama' => $request->nama,
             'deskripsi' => $request->deskripsi,
             'kategori_id' => $request->kategori_id,

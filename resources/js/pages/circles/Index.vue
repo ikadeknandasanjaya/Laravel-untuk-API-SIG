@@ -229,6 +229,8 @@
 
 <script>
 import AppLayout from '../../components/AppLayout.vue';
+import GeoFeatureService from '../../services/GeoFeatureService.js';
+import toast from '../../utils/toast.js';
 
 export default {
     name: 'CirclesIndex',
@@ -264,24 +266,25 @@ export default {
         async loadData() {
             this.loading = true;
             try {
-                // TODO: Replace with actual API calls
-                // For now, using dummy data
-                this.circles = [
-                    {
-                        id: 1,
-                        name: 'Sample Circle 1',
-                        description: 'This is a sample circle',
-                        category_id: 1,
-                        latitude: -8.4095,
-                        longitude: 115.1889,
-                        radius: 2.5,
-                        fillColor: '#3b82f6',
-                        strokeColor: '#1e40af',
+                const result = await GeoFeatureService.getCircles();
+                if (result.success) {
+                    this.circles = result.data.map(circle => ({
+                        id: circle.id,
+                        name: circle.nama,
+                        description: circle.deskripsi || '',
+                        category_id: circle.kategori_id,
+                        latitude: circle.coordinates?.[1] || 0,
+                        longitude: circle.coordinates?.[0] || 0,
+                        radius: (circle.properties?.radius || 0) / 1000, // Convert to km
+                        fillColor: circle.properties?.color || '#3b82f6',
+                        strokeColor: circle.properties?.color || '#3b82f6',
                         strokeWidth: 2,
-                        fillOpacity: 0.3,
-                        created_at: '2024-01-15T10:30:00Z'
-                    }
-                ];
+                        fillOpacity: circle.properties?.opacity || 0.5,
+                        created_at: circle.created_at
+                    }));
+                } else {
+                    this.circles = [];
+                }
                 
                 this.categories = [
                     { id: 1, name: 'Buffer Zone' },
@@ -294,6 +297,9 @@ export default {
                 this.filteredCircles = [...this.circles];
             } catch (error) {
                 console.error('Error loading circles:', error);
+                toast.error('Failed to load circles', 'Error');
+                this.circles = [];
+                this.filteredCircles = [];
             } finally {
                 this.loading = false;
             }
@@ -351,15 +357,23 @@ export default {
             });
         },
         async deleteCircle(circle) {
-            if (confirm(`Are you sure you want to delete "${circle.name}"?`)) {
+            const confirmed = await new Promise((resolve) => {
+                if (window.confirm(`Are you sure you want to delete "${circle.name}"?`)) {
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            });
+            
+            if (confirmed) {
                 try {
-                    // TODO: Implement actual delete API call
+                    await GeoFeatureService.deleteFeature(circle.id);
                     this.circles = this.circles.filter(c => c.id !== circle.id);
                     this.filterCircles();
-                    alert('Circle deleted successfully');
+                    toast.success('Circle deleted successfully', 'Success');
                 } catch (error) {
                     console.error('Error deleting circle:', error);
-                    alert('Error deleting circle');
+                    toast.error('Error deleting circle', 'Error');
                 }
             }
         }

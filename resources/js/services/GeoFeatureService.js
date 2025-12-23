@@ -133,10 +133,7 @@ class GeoFeatureService {
         return this.createFeature({
             ...markerData,
             geometry_type: 'marker',
-            coordinates: {
-                lat: markerData.latitude,
-                lng: markerData.longitude
-            }
+            coordinates: [markerData.longitude, markerData.latitude] // GeoJSON format: [lng, lat]
         });
     }
 

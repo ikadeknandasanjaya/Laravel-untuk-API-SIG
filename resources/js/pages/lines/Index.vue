@@ -228,6 +228,8 @@
 
 <script>
 import AppLayout from '../../components/AppLayout.vue';
+import GeoFeatureService from '../../services/GeoFeatureService.js';
+import toast from '../../utils/toast.js';
 
 export default {
     name: 'LinesIndex',
@@ -261,25 +263,23 @@ export default {
         async loadData() {
             this.loading = true;
             try {
-                // TODO: Replace with actual API calls
-                // For now, using dummy data
-                this.lines = [
-                    {
-                        id: 1,
-                        name: 'Sample Route 1',
-                        description: 'This is a sample route',
-                        category_id: 1,
-                        color: '#3b82f6',
-                        width: 3,
-                        length: 5.2,
-                        coordinates: [
-                            [-8.4095, 115.1889],
-                            [-8.4105, 115.1899],
-                            [-8.4115, 115.1909]
-                        ],
-                        created_at: '2024-01-15T10:30:00Z'
-                    }
-                ];
+                const result = await GeoFeatureService.getPolylines();
+                if (result.success) {
+                    this.lines = result.data.map(line => ({
+                        id: line.id,
+                        name: line.nama,
+                        description: line.deskripsi || '',
+                        category_id: line.kategori_id,
+                        color: line.properties?.color || '#3b82f6',
+                        width: line.properties?.width || 3,
+                        opacity: line.properties?.opacity || 0.8,
+                        length: line.properties?.length || 0,
+                        coordinates: line.coordinates || [],
+                        created_at: line.created_at
+                    }));
+                } else {
+                    this.lines = [];
+                }
                 
                 this.categories = [
                     { id: 1, name: 'Main Road' },
@@ -291,6 +291,9 @@ export default {
                 this.filteredLines = [...this.lines];
             } catch (error) {
                 console.error('Error loading lines:', error);
+                toast.error('Failed to load lines', 'Error');
+                this.lines = [];
+                this.filteredLines = [];
             } finally {
                 this.loading = false;
             }
@@ -368,15 +371,23 @@ export default {
             }
         },
         async deleteLine(line) {
-            if (confirm(`Are you sure you want to delete "${line.name}"?`)) {
+            const confirmed = await new Promise((resolve) => {
+                if (window.confirm(`Are you sure you want to delete "${line.name}"?`)) {
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            });
+            
+            if (confirmed) {
                 try {
-                    // TODO: Implement actual delete API call
+                    await GeoFeatureService.deleteFeature(line.id);
                     this.lines = this.lines.filter(l => l.id !== line.id);
                     this.filterLines();
-                    alert('Line deleted successfully');
+                    toast.success('Line deleted successfully', 'Success');
                 } catch (error) {
                     console.error('Error deleting line:', error);
-                    alert('Error deleting line');
+                    toast.error('Error deleting line', 'Error');
                 }
             }
         }

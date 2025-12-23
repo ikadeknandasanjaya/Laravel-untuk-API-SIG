@@ -13,7 +13,9 @@ import MarkersCreate from './pages/markers/Create.vue';
 import LinesIndex from './pages/lines/Index.vue';
 import LinesCreate from './pages/lines/Create.vue';
 import PolygonsIndex from './pages/polygons/Index.vue';
+import PolygonsCreate from './pages/polygons/Create.vue';
 import CirclesIndex from './pages/circles/Index.vue';
+import CirclesCreate from './pages/circles/Create.vue';
 
 export default [
     {
@@ -104,9 +106,21 @@ export default [
         meta: { requiresAuth: true },
     },
     {
+        path: '/polygons/create',
+        name: 'polygons.create',
+        component: PolygonsCreate,
+        meta: { requiresAuth: true },
+    },
+    {
         path: '/circles',
         name: 'circles',
         component: CirclesIndex,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/circles/create',
+        name: 'circles.create',
+        component: CirclesCreate,
         meta: { requiresAuth: true },
     },
 ];

@@ -227,6 +227,8 @@
 
 <script>
 import AppLayout from '../../components/AppLayout.vue';
+import GeoFeatureService from '../../services/GeoFeatureService.js';
+import toast from '../../utils/toast.js';
 
 export default {
     name: 'PolygonsIndex',
@@ -260,28 +262,24 @@ export default {
         async loadData() {
             this.loading = true;
             try {
-                // TODO: Replace with actual API calls
-                // For now, using dummy data
-                this.polygons = [
-                    {
-                        id: 1,
-                        name: 'Sample Area 1',
-                        description: 'This is a sample polygon area',
-                        category_id: 1,
-                        fillColor: '#3b82f6',
-                        strokeColor: '#1e40af',
-                        strokeWidth: 2,
-                        fillOpacity: 0.3,
-                        area: 15.7,
-                        coordinates: [
-                            [-8.4095, 115.1889],
-                            [-8.4105, 115.1899],
-                            [-8.4115, 115.1909],
-                            [-8.4095, 115.1889]
-                        ],
-                        created_at: '2024-01-15T10:30:00Z'
-                    }
-                ];
+                const result = await GeoFeatureService.getPolygons();
+                if (result.success) {
+                    this.polygons = result.data.map(polygon => ({
+                        id: polygon.id,
+                        name: polygon.nama,
+                        description: polygon.deskripsi || '',
+                        category_id: polygon.kategori_id,
+                        fillColor: polygon.properties?.fillColor || '#3b82f6',
+                        strokeColor: polygon.properties?.strokeColor || '#1e40af',
+                        strokeWidth: polygon.properties?.strokeWidth || 2,
+                        fillOpacity: polygon.properties?.opacity || 0.4,
+                        area: 15.7, // TODO: Calculate actual area
+                        coordinates: polygon.coordinates || [],
+                        created_at: polygon.created_at
+                    }));
+                } else {
+                    this.polygons = [];
+                }
                 
                 this.categories = [
                     { id: 1, name: 'Administrative Area' },
@@ -294,6 +292,9 @@ export default {
                 this.filteredPolygons = [...this.polygons];
             } catch (error) {
                 console.error('Error loading polygons:', error);
+                toast.error('Failed to load polygons', 'Error');
+                this.polygons = [];
+                this.filteredPolygons = [];
             } finally {
                 this.loading = false;
             }
@@ -385,15 +386,23 @@ export default {
             };
         },
         async deletePolygon(polygon) {
-            if (confirm(`Are you sure you want to delete "${polygon.name}"?`)) {
+            const confirmed = await new Promise((resolve) => {
+                if (window.confirm(`Are you sure you want to delete "${polygon.name}"?`)) {
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            });
+            
+            if (confirmed) {
                 try {
-                    // TODO: Implement actual delete API call
+                    await GeoFeatureService.deleteFeature(polygon.id);
                     this.polygons = this.polygons.filter(p => p.id !== polygon.id);
                     this.filterPolygons();
-                    alert('Polygon deleted successfully');
+                    toast.success('Polygon deleted successfully', 'Success');
                 } catch (error) {
                     console.error('Error deleting polygon:', error);
-                    alert('Error deleting polygon');
+                    toast.error('Error deleting polygon', 'Error');
                 }
             }
         }

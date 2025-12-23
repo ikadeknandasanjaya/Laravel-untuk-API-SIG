@@ -260,6 +260,8 @@
 <script>
 import AppLayout from '../../components/AppLayout.vue';
 import L from 'leaflet';
+import toast from '../../utils/toast.js';
+import GeoFeatureService from '../../services/GeoFeatureService.js';
 
 export default {
     name: 'CreateLine',
@@ -440,34 +442,59 @@ export default {
             
             this.loading = true;
             try {
-                // TODO: Replace with actual API call
                 console.log('Saving line:', this.form);
                 
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Convert coordinates from {lat, lng} to [lng, lat] array format (GeoJSON)
+                const coordinates = this.form.coordinates.map(coord => [coord.lng, coord.lat]);
                 
-                alert('Line saved successfully!');
-                this.$router.push('/lines');
+                // Prepare data for API
+                const lineData = {
+                    nama: this.form.name,
+                    deskripsi: this.form.description || '',
+                    kategori_id: this.form.category_id ? parseInt(this.form.category_id) : null,
+                    coordinates: coordinates,
+                    properties: {
+                        color: this.form.color,
+                        width: this.form.width,
+                        opacity: this.form.opacity,
+                        length: this.form.length
+                    }
+                };
+                
+                console.log('Sending line data:', lineData);
+                
+                // Call API
+                const result = await GeoFeatureService.createPolyline(lineData);
+                
+                console.log('API result:', result);
+                
+                if (result.success) {
+                    toast.success('Line berhasil disimpan!', 'Sukses');
+                    this.$router.push('/lines');
+                } else {
+                    toast.error(result.message || 'Gagal menyimpan line', 'Error');
+                }
             } catch (error) {
                 console.error('Error saving line:', error);
-                alert('Error saving line. Please try again.');
+                console.error('Error response:', error.response?.data);
+                toast.error('Gagal menyimpan line. Silakan coba lagi.', 'Error');
             } finally {
                 this.loading = false;
             }
         },
         validateForm() {
             if (!this.form.name.trim()) {
-                alert('Please enter a line name.');
+                toast.warning('Silakan masukkan nama line.', 'Peringatan');
                 return false;
             }
             
             if (!this.form.category_id) {
-                alert('Please select a category.');
+                toast.warning('Silakan pilih kategori.', 'Peringatan');
                 return false;
             }
             
             if (this.form.coordinates.length < 2) {
-                alert('Please add at least 2 points to create a line.');
+                toast.warning('Silakan tambahkan minimal 2 titik untuk membuat line.', 'Peringatan');
                 return false;
             }
             

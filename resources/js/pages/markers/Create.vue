@@ -55,51 +55,6 @@
                             </div>
                         </div>
 
-                        <!-- Region Selection -->
-                        <div class="form-group">
-                            <h3>Region</h3>
-                            
-                            <div class="input-group">
-                                <label for="provinsi">Provinsi *</label>
-                                <select id="provinsi" v-model="selectedProvinsi" @change="onProvinsiChange" required>
-                                    <option value="">Pilih Provinsi</option>
-                                    <option v-for="prov in regionData.provinsi" :key="prov.id" :value="prov.id">
-                                        {{ prov.provinsi }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="input-group">
-                                <label for="kabupaten">Kabupaten *</label>
-                                <select id="kabupaten" v-model="selectedKabupaten" @change="onKabupatenChange" required :disabled="!selectedProvinsi">
-                                    <option value="">Pilih Kabupaten</option>
-                                    <option v-for="kab in filteredKabupaten" :key="kab.id" :value="kab.id">
-                                        {{ kab.kabupaten }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="input-group">
-                                <label for="kecamatan">Kecamatan *</label>
-                                <select id="kecamatan" v-model="selectedKecamatan" @change="onKecamatanChange" required :disabled="!selectedKabupaten">
-                                    <option value="">Pilih Kecamatan</option>
-                                    <option v-for="kec in filteredKecamatan" :key="kec.id" :value="kec.id">
-                                        {{ kec.kecamatan }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="input-group">
-                                <label for="desa">Desa *</label>
-                                <select id="desa" v-model="form.desa_id" required :disabled="!selectedKecamatan">
-                                    <option value="">Pilih Desa</option>
-                                    <option v-for="desa in filteredDesa" :key="desa.id" :value="desa.id">
-                                        {{ desa.desa }}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-
                         <!-- Location Information -->
                         <div class="form-group">
                             <h3>Location</h3>
@@ -176,41 +131,6 @@
                                     >
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Information -->
-                        <div class="form-group">
-                            <h3>Additional Information</h3>
-                            
-                            <div class="input-group">
-                                <label for="address">Address</label>
-                                <input 
-                                    type="text" 
-                                    id="address"
-                                    v-model="form.address"
-                                    placeholder="Enter address"
-                                >
-                            </div>
-
-                            <div class="input-group">
-                                <label for="website">Website</label>
-                                <input 
-                                    type="url" 
-                                    id="website"
-                                    v-model="form.website"
-                                    placeholder="https://example.com"
-                                >
-                            </div>
-
-                            <div class="input-group">
-                                <label for="phone">Phone</label>
-                                <input 
-                                    type="tel" 
-                                    id="phone"
-                                    v-model="form.phone"
-                                    placeholder="+62 XXX XXX XXXX"
-                                >
                             </div>
                         </div>
 
