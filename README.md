@@ -1,16 +1,34 @@
-# Laravel API SIG - Sistem Informasi Geografis
+# 🗺️ Laravel API SIG - Sistem Informasi Geografis
 
-Project Laravel untuk API Sistem Informasi Geografis yang menyediakan endpoint untuk data wisata di Bali.
+Project Laravel untuk API Sistem Informasi Geografis dengan dukungan berbagai jenis fitur geografis.
 
-## Deskripsi
+## ✨ Fitur Utama
 
-API ini menyediakan endpoint untuk mengakses data wisata dengan fitur pencarian, filter berdasarkan kategori, dan pagination. Data wisata mencakup informasi lokasi geografis (latitude dan longitude), nama, alamat, dan kategori wisata.
+### GeoFeature System (NEW!)
+- 🔴 **Markers** - Points of Interest (POI)
+- 🔷 **Polygons** - Area/Region Zones
+- 〰️ **Polylines** - Routes/Roads/Paths
+- ⭕ **Circles** - Coverage/Radius Areas
+
+### Backend
+- RESTful API dengan Laravel 12
+- Database Supabase (PostgreSQL)
+- Authentication dengan Laravel Sanctum
+- Sample data pre-seeded (11 features)
+
+### Frontend
+- Vue 3 + Vite
+- Leaflet.js untuk peta interaktif
+- Axios untuk API client
+- Reactive data management
 
 ## Teknologi yang Digunakan
 
 - **Laravel 12**: Framework PHP
-- **SQLite**: Database
+- **Supabase**: PostgreSQL Database
 - **PHP 8.2+**: Bahasa pemrograman
+- **Vue 3**: Frontend framework
+- **Leaflet.js**: Interactive maps
 
 ## Instalasi dan Setup
 

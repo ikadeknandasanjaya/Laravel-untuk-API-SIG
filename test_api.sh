@@ -34,3 +34,4 @@ echo ""
 
 echo "=== Testing selesai ==="
 echo "Pastikan server Laravel berjalan dengan: php artisan serve"
+

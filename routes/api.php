@@ -2,7 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\WisataController;
+use App\Http\Controllers\GeoFeatureController;
+use App\Http\Controllers\ApiAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,9 +16,13 @@ use App\Http\Controllers\Api\WisataController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Local Auth Routes
+Route::post('/login', [ApiAuthController::class, 'login']);
+Route::post('/register', [ApiAuthController::class, 'register']);
+Route::post('/logout', [ApiAuthController::class, 'logout'])->middleware('auth:sanctum');
+
+// Protected User Route
+Route::middleware('auth:sanctum')->get('/user', [ApiAuthController::class, 'user']);
 
 // API Lokasi Sederhana
 Route::get('/lokasi', function (Request $req) {
@@ -27,6 +32,21 @@ Route::get('/lokasi', function (Request $req) {
     ]);
 });
 
-// API Wisata
-Route::get('/wisata', [WisataController::class, 'index']);
-Route::get('/wisata/{id}', [WisataController::class, 'show']);
+// API Geo Features - CRUD untuk semua jenis fitur geografis
+Route::prefix('geo-features')->group(function () {
+    // Get all features or filter by type
+    Route::get('/', [GeoFeatureController::class, 'index']);
+    
+    // Get by specific geometry type
+    Route::get('/markers', [GeoFeatureController::class, 'markers']);
+    Route::get('/polygons', [GeoFeatureController::class, 'polygons']);
+    Route::get('/polylines', [GeoFeatureController::class, 'polylines']);
+    Route::get('/circles', [GeoFeatureController::class, 'circles']);
+    
+    // CRUD operations
+    Route::post('/', [GeoFeatureController::class, 'store']);
+    Route::get('/{id}', [GeoFeatureController::class, 'show']);
+    Route::put('/{id}', [GeoFeatureController::class, 'update']);
+    Route::delete('/{id}', [GeoFeatureController::class, 'destroy']);
+});
+
