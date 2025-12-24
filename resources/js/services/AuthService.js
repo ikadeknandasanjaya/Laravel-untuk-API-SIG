@@ -262,12 +262,20 @@ class AuthService {
 
     async getRemoteUser() {
         try {
-            if (!this.remoteToken) return;
+            if (!this.remoteToken) {
+                console.log('⚠️ getRemoteUser - no remoteToken');
+                return;
+            }
+            console.log('📡 getRemoteUser - fetching from', REMOTE_API_URL);
             const response = await axios.get(`${REMOTE_API_URL}/user`, {
                 headers: { Authorization: `Bearer ${this.remoteToken}` }
             });
-            if (response.data.data?.user) {
-                this.remoteUser = response.data.data.user;
+            console.log('✅ getRemoteUser response:', response.data);
+            // Handle response structure: data.user or data.data.user
+            const userData = response.data.data?.user || response.data.user;
+            if (userData) {
+                this.remoteUser = userData;
+                console.log('💾 remoteUser stored:', this.remoteUser);
                 localStorage.setItem('remote_user', JSON.stringify(this.remoteUser));
             }
         } catch (error) {
@@ -277,16 +285,42 @@ class AuthService {
 
     async getLocalUser() {
         try {
-            if (!this.localToken) return;
+            if (!this.localToken) {
+                console.log('⚠️ getLocalUser - no localToken');
+                return;
+            }
+            console.log('📡 getLocalUser - fetching from', LOCAL_API_URL);
             const response = await axios.get(`${LOCAL_API_URL}/user`, {
                 headers: { Authorization: `Bearer ${this.localToken}` }
             });
-            if (response.data.data) {
-                this.localUser = response.data.data;
+            console.log('✅ getLocalUser response:', response.data);
+            // Handle response structure: data or data.user
+            const userData = response.data.data || response.data.user || response.data;
+            if (userData && (userData.name || userData.email)) {
+                this.localUser = userData;
+                console.log('💾 localUser stored:', this.localUser);
                 localStorage.setItem('local_user', JSON.stringify(this.localUser));
             }
         } catch (error) {
             console.error('Get local user error:', error);
+        }
+    }
+
+    async refreshUserData() {
+        try {
+            console.log('🔄 AuthService.refreshUserData() - localToken:', !!this.localToken, 'remoteToken:', !!this.remoteToken);
+            // Try to get fresh user data from API
+            if (this.localToken) {
+                console.log('📡 Fetching local user data...');
+                await this.getLocalUser();
+            }
+            if (this.remoteToken) {
+                console.log('📡 Fetching remote user data...');
+                await this.getRemoteUser();
+            }
+            console.log('✅ refreshUserData complete - user:', this.getCurrentUser());
+        } catch (error) {
+            console.error('Refresh user data error:', error);
         }
     }
 

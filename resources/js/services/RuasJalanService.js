@@ -37,7 +37,15 @@ class RuasJalanService {
 
     async getRuasJalanById(id) {
         try {
-            const response = await axios.get(`${API_BASE_URL}/ruasjalan/${id}`);
+            const remoteToken = this.getRemoteToken();
+            const headers = remoteToken ? { Authorization: `Bearer ${remoteToken}` } : {};
+            
+            console.log('Getting ruas jalan ID:', id);
+            console.log('Token:', remoteToken ? 'Present' : 'Missing');
+            
+            const response = await axios.get(`${API_BASE_URL}/ruasjalan/${id}`, { headers });
+            
+            console.log('Response:', response.data);
             
             if (response.data.code === 200) {
                 return {
@@ -51,6 +59,7 @@ class RuasJalanService {
                 throw new Error('Failed to fetch ruas jalan');
             }
         } catch (error) {
+            console.error('Error in getRuasJalanById:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to fetch ruas jalan'
@@ -60,7 +69,11 @@ class RuasJalanService {
 
     async createRuasJalan(ruasJalanData) {
         try {
-            const response = await axios.post(`${API_BASE_URL}/ruasjalan`, {
+            const remoteToken = this.getRemoteToken();
+            const headers = remoteToken ? { Authorization: `Bearer ${remoteToken}` } : {};
+            
+            // Ensure keterangan is never null or empty
+            const payload = {
                 paths: ruasJalanData.paths,
                 desa_id: ruasJalanData.desa_id,
                 kode_ruas: ruasJalanData.kode_ruas,
@@ -70,8 +83,14 @@ class RuasJalanService {
                 eksisting_id: ruasJalanData.eksisting_id,
                 kondisi_id: ruasJalanData.kondisi_id,
                 jenisjalan_id: ruasJalanData.jenisjalan_id,
-                keterangan: ruasJalanData.keterangan
-            });
+                keterangan: ruasJalanData.keterangan || '-'
+            };
+            
+            console.log('POST to Dosen API:', `${API_BASE_URL}/ruasjalan`);
+            console.log('Payload:', payload);
+            console.log('Headers:', headers);
+            
+            const response = await axios.post(`${API_BASE_URL}/ruasjalan`, payload, { headers });
             
             if (response.data.code === 200 || response.status === 201) {
                 return {
@@ -92,6 +111,9 @@ class RuasJalanService {
 
     async updateRuasJalan(id, ruasJalanData) {
         try {
+            const remoteToken = this.getRemoteToken();
+            const headers = remoteToken ? { Authorization: `Bearer ${remoteToken}` } : {};
+            
             const response = await axios.put(`${API_BASE_URL}/ruasjalan/${id}`, {
                 paths: ruasJalanData.paths,
                 desa_id: ruasJalanData.desa_id,
@@ -103,7 +125,7 @@ class RuasJalanService {
                 kondisi_id: ruasJalanData.kondisi_id,
                 jenisjalan_id: ruasJalanData.jenisjalan_id,
                 keterangan: ruasJalanData.keterangan
-            });
+            }, { headers });
             
             if (response.data.code === 200 || response.status === 200) {
                 return {
@@ -124,7 +146,10 @@ class RuasJalanService {
 
     async deleteRuasJalan(id) {
         try {
-            const response = await axios.delete(`${API_BASE_URL}/ruasjalan/${id}`);
+            const remoteToken = this.getRemoteToken();
+            const headers = remoteToken ? { Authorization: `Bearer ${remoteToken}` } : {};
+            
+            const response = await axios.delete(`${API_BASE_URL}/ruasjalan/${id}`, { headers });
             
             if (response.status === 200 || response.status === 204) {
                 return {

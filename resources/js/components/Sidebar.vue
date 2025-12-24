@@ -22,12 +22,12 @@
             <nav class="sidebar-nav">
                 <!-- Main Map Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Main Map</div>
+                    <div class="section-title" v-if="!isCollapsed">Peta Utama</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/dashboard" class="nav-link" :class="{ active: $route.name === 'dashboard' }">
                                 <i class="fas fa-chart-pie"></i>
-                                <span v-if="!isCollapsed">Overview</span>
+                                <span v-if="!isCollapsed">Ikhtisar</span>
                             </router-link>
                         </li>
                     </ul>
@@ -35,24 +35,24 @@
 
                 <!-- Street Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Street</div>
+                    <div class="section-title" v-if="!isCollapsed">Ruas Jalan</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/ruasjalan" class="nav-link" :class="{ active: $route.name?.includes('ruasjalan') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Street Overview</span>
+                                <span v-if="!isCollapsed">Daftar Ruas Jalan</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <router-link to="/location" class="nav-link">
                                 <i class="fas fa-map-marker-alt"></i>
-                                <span v-if="!isCollapsed">Location</span>
-                            </a>
+                                <span v-if="!isCollapsed">Lokasi</span>
+                            </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/ruasjalan/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Add Street</span>
+                                <span v-if="!isCollapsed">Tambah Ruas Jalan</span>
                             </router-link>
                         </li>
                     </ul>
@@ -60,24 +60,25 @@
 
                 <!-- Marker Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Marker</div>
+                    <div class="section-title" v-if="!isCollapsed">Penanda</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/markers" class="nav-link" :class="{ active: $route.name?.includes('marker') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Marker Overview</span>
+                                <span v-if="!isCollapsed">Daftar Penanda</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/marker-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Marker Category</span>
+                                <span v-if="!isCollapsed">Kategori Penanda</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/markers/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Add Marker</span>
+                                <span v-if="!isCollapsed">Tambah Penanda</span>
+
                             </router-link>
                         </li>
                     </ul>
@@ -85,24 +86,24 @@
 
                 <!-- Line Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Line</div>
+                    <div class="section-title" v-if="!isCollapsed">Garis</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/lines" class="nav-link" :class="{ active: $route.name?.includes('line') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Line Overview</span>
+                                <span v-if="!isCollapsed">Daftar Garis</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/line-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Line Category</span>
+                                <span v-if="!isCollapsed">Kategori Garis</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/lines/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Add Line</span>
+                                <span v-if="!isCollapsed">Tambah Garis</span>
                             </router-link>
                         </li>
                     </ul>
@@ -110,24 +111,24 @@
 
                 <!-- Polygon Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Polygon</div>
+                    <div class="section-title" v-if="!isCollapsed">Poligon</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/polygons" class="nav-link" :class="{ active: $route.name?.includes('polygon') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Polygon Overview</span>
+                                <span v-if="!isCollapsed">Daftar Poligon</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/polygon-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Polygon Category</span>
+                                <span v-if="!isCollapsed">Kategori Poligon</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/polygons/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Add Polygon</span>
+                                <span v-if="!isCollapsed">Tambah Poligon</span>
                             </router-link>
                         </li>
                     </ul>
@@ -135,24 +136,25 @@
 
                 <!-- Circle Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Circle</div>
+                    <div class="section-title" v-if="!isCollapsed">Lingkaran</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/circles" class="nav-link" :class="{ active: $route.name?.includes('circle') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Circle Overview</span>
+                                <span v-if="!isCollapsed">Daftar Lingkaran</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/circle-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Circle Category</span>
+                                <span v-if="!isCollapsed">Kategori Lingkaran</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/circles/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Add Circle</span>
+                                <span v-if="!isCollapsed">Tambah Lingkaran</span>
+
                             </router-link>
                         </li>
                     </ul>
@@ -160,24 +162,24 @@
 
                 <!-- Profile & Settings -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Profile</div>
+                    <div class="section-title" v-if="!isCollapsed">Profil</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/profile" class="nav-link" :class="{ active: $route.name === 'profile' }">
                                 <i class="fas fa-user"></i>
-                                <span v-if="!isCollapsed">Profile</span>
+                                <span v-if="!isCollapsed">Profil</span>
                             </router-link>
                         </li>
                     </ul>
                 </div>
 
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Settings</div>
+                    <div class="section-title" v-if="!isCollapsed">Pengaturan</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/settings" class="nav-link" :class="{ active: $route.name === 'settings' }">
                                 <i class="fas fa-cog"></i>
-                                <span v-if="!isCollapsed">Settings</span>
+                                <span v-if="!isCollapsed">Pengaturan</span>
                             </router-link>
                         </li>
                     </ul>
@@ -190,7 +192,7 @@
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <div class="user-details">
-                    <span class="username">Hello, {{ username }}</span>
+                    <span class="username">Halo, {{ username }}</span>
                     <button @click="logout" class="logout-btn">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
@@ -201,6 +203,9 @@
 </template>
 
 <script>
+import AuthService from '../services/AuthService.js';
+import toast from '../utils/toast.js';
+
 export default {
     name: 'Sidebar',
     props: {
@@ -212,17 +217,51 @@ export default {
     data() {
         return {
             isCollapsed: false,
-            username: 'dsds'
+            user: null,
+            forceUpdateCounter: 0
+        }
+    },
+    computed: {
+        username() {
+            this.forceUpdateCounter; // Dependency for reactivity
+            const user = this.user || AuthService.getCurrentUser();
+            if (user && user.name) {
+                return user.name;
+            }
+            const remoteToken = localStorage.getItem('remote_auth_token');
+            return remoteToken ? 'Pengguna' : 'Guest';
         }
     },
     methods: {
         toggleSidebar() {
             this.isCollapsed = !this.isCollapsed;
         },
-        logout() {
-            // Implement logout logic
-            this.$router.push('/login');
+        async logout() {
+            try {
+                await AuthService.logout();
+                toast.success('Logout berhasil!', 'Sukses');
+                this.$router.push('/login');
+            } catch (error) {
+                console.error('Logout error:', error);
+                toast.error('Terjadi kesalahan saat logout.', 'Error');
+            }
+        },
+        refreshUserData() {
+            const user = AuthService.getCurrentUser();
+            if (user) {
+                this.user = user;
+            }
+            this.forceUpdateCounter++;
+        },
+        async loadUserData() {
+            // Refresh user data from API first
+            await AuthService.refreshUserData();
+            // Then update local component state
+            this.refreshUserData();
         }
+    },
+    mounted() {
+        this.loadUserData();
     }
 }
 </script>

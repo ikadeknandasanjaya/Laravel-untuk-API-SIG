@@ -241,7 +241,22 @@
                         <div class="map-container">
                             <div id="map" class="map"></div>
                             <div class="map-instructions">
-                                <p><i class="fas fa-info-circle"></i> Klik pada peta untuk menentukan lokasi ruas jalan</p>
+                                <div class="instruction-item">
+                                    <i class="fas fa-pencil-alt"></i>
+                                    <span>Klik ikon <strong>Draw a polyline</strong> (garis) di pojok kiri atas peta</span>
+                                </div>
+                                <div class="instruction-item">
+                                    <i class="fas fa-mouse-pointer"></i>
+                                    <span>Klik pada peta untuk menambah titik-titik ruas jalan</span>
+                                </div>
+                                <div class="instruction-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>Klik dua kali atau klik titik terakhir untuk selesai</span>
+                                </div>
+                                <div v-if="form.paths" class="path-info">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                    <span>Path: <code>{{ form.paths.substring(0, 30) }}...</code></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -266,7 +281,10 @@ import RegionService from '../../services/RegionService.js';
 import RuasJalanService from '../../services/RuasJalanService.js';
 import toast from '../../utils/toast.js';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
+import polyline from '@mapbox/polyline';
 
 export default {
     name: 'CreateRuasJalan',
@@ -287,7 +305,7 @@ export default {
                 eksisting_id: '',
                 kondisi_id: '',
                 jenisjalan_id: '',
-                keterangan: '',
+                keterangan: '-', // Default value to prevent null error
                 paths: ''
             },
             
@@ -502,7 +520,11 @@ export default {
                 this.form.paths = this.encodePolyline(coordinates);
                 this.currentPath = coordinates;
                 
-                toast.success('Lokasi ruas jalan berhasil ditandai!', 'Sukses');
+                // Calculate and set panjang (length in meters)
+                const lengthInMeters = this.calculatePathLength(coordinates);
+                this.form.panjang = Math.round(lengthInMeters);
+                
+                toast.success(`Ruas jalan berhasil ditandai! Panjang: ${Math.round(lengthInMeters)}m`, 'Sukses');
             });
 
             this.map.on('draw:edited', (e) => {
@@ -511,6 +533,10 @@ export default {
                     const coordinates = layer.getLatLngs();
                     this.form.paths = this.encodePolyline(coordinates);
                     this.currentPath = coordinates;
+                    
+                    // Recalculate panjang
+                    const lengthInMeters = this.calculatePathLength(coordinates);
+                    this.form.panjang = Math.round(lengthInMeters);
                 });
                 
                 toast.success('Lokasi ruas jalan berhasil diperbarui!', 'Sukses');
@@ -519,14 +545,37 @@ export default {
             this.map.on('draw:deleted', () => {
                 this.form.paths = '';
                 this.currentPath = null;
+                this.form.panjang = '';
                 toast.info('Lokasi ruas jalan dihapus.', 'Info');
             });
         },
 
+        calculatePathLength(coordinates) {
+            let totalDistance = 0;
+            
+            for (let i = 0; i < coordinates.length - 1; i++) {
+                const point1 = coordinates[i];
+                const point2 = coordinates[i + 1];
+                
+                // Calculate distance between two points using Leaflet's built-in method
+                const distance = this.map.distance(point1, point2);
+                totalDistance += distance;
+            }
+            
+            return totalDistance;
+        },
+
         encodePolyline(coordinates) {
-            // Simple JSON encoding for now
-            // You might want to use a proper polyline encoding library
-            return JSON.stringify(coordinates.map(coord => [coord.lat, coord.lng]));
+            // Convert Leaflet LatLng objects to [lat, lng] array format
+            const points = coordinates.map(coord => [coord.lat, coord.lng]);
+            
+            // Encode using Google's polyline algorithm (precision 5)
+            const encoded = polyline.encode(points);
+            
+            console.log('Coordinates:', points);
+            console.log('Encoded polyline:', encoded);
+            
+            return encoded;
         },
 
         async handleSubmit() {
@@ -537,17 +586,32 @@ export default {
             this.loading = true;
             
             try {
+                // Check if remote token exists
+                const remoteToken = localStorage.getItem('remote_auth_token');
+                if (!remoteToken) {
+                    toast.error('Token autentikasi tidak ditemukan. Silakan login kembali.', 'Error');
+                    this.loading = false;
+                    return;
+                }
+                
+                console.log('Submitting ruas jalan data:', this.form);
+                
                 const result = await RuasJalanService.createRuasJalan(this.form);
                 
                 if (result.success) {
                     toast.success('Ruas jalan berhasil ditambahkan!', 'Sukses');
-                    this.$router.push('/ruasjalan');
+                    setTimeout(() => {
+                        this.$router.push('/ruasjalan');
+                    }, 1500);
                 } else {
-                    toast.error(result.message, 'Error');
+                    const errorMsg = result.message || 'Gagal menyimpan data ruas jalan';
+                    toast.error(errorMsg, 'Error');
+                    console.error('Create ruas jalan failed:', result);
                 }
             } catch (error) {
                 console.error('Error creating ruas jalan:', error);
-                toast.error('Terjadi kesalahan saat menyimpan data.', 'Error');
+                const errorMsg = error.response?.data?.message || error.message || 'Terjadi kesalahan saat menyimpan data.';
+                toast.error(errorMsg, 'Error');
             } finally {
                 this.loading = false;
             }
@@ -738,6 +802,53 @@ export default {
     color: #3b82f6;
 }
 
+.instruction-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.instruction-item:last-child {
+    margin-bottom: 0;
+}
+
+.instruction-item i {
+    color: #3b82f6;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+}
+
+.instruction-item strong {
+    color: #1f2937;
+}
+
+.path-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.path-info i {
+    color: #3b82f6;
+}
+
+.path-info code {
+    background: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    color: #1e40af;
+}
+
 .form-actions {
     margin-top: 2rem;
     padding-top: 2rem;
@@ -783,6 +894,59 @@ export default {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Leaflet Draw Control Styling */
+.leaflet-draw-toolbar {
+    margin-top: 10px !important;
+}
+
+.leaflet-draw-toolbar a {
+    background-color: white !important;
+    border: 2px solid rgba(0,0,0,0.2) !important;
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 32px !important;
+}
+
+.leaflet-draw-toolbar a:hover {
+    background-color: #f4f4f4 !important;
+    border-color: #3b82f6 !important;
+}
+
+.leaflet-draw-draw-polyline {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNCAyMGg0TDIwIDhsLTQtNEw0IDIweiIvPjxwYXRoIGQ9Ik0xMy41IDcuNWwyLjUgMi41Ii8+PC9zdmc+') !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 20px 20px !important;
+}
+
+.leaflet-draw-edit-edit {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YjU1NjMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTcgM2E0IDQgMCAwIDEgNCA0djJhNCA0IDAgMCAxLTQgNEg3YTQgNCAwIDAgMS00LTRWN2E0IDQgMCAwIDEgNC00eiIvPjxwYXRoIGQ9Ik0xMiA4djgiLz48cGF0aCBkPSJNOCAxMmg4Ii8+PC9zdmc+') !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 18px 18px !important;
+}
+
+.leaflet-draw-edit-remove {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNlZjQ0NDQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWxpbmUgcG9pbnRzPSIzIDYgNSA2IDIxIDYiLz48cGF0aCBkPSJNMTkgNnYxNGEyIDIgMCAwIDEtMiAySDdhMiAyIDAgMCAxLTItMlY2bTE0IDBWNGEyIDIgMCAwIDAtMi0ySDlhMiAyIDAgMCAwLTIgMnYyIi8+PC9zdmc+') !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 18px 18px !important;
+}
+
+.leaflet-draw-actions {
+    left: 34px !important;
+}
+
+.leaflet-draw-actions a {
+    background-color: white !important;
+    color: #333 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 0 10px !important;
+    height: 28px !important;
+    line-height: 28px !important;
 }
 
 @media (max-width: 768px) {

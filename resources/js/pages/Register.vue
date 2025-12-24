@@ -210,7 +210,7 @@ export default {
                     confirmPassword: this.form.confirmPassword ? '***' : 'empty'
                 });
                 
-                const result = await AuthService.register({
+                const result = await AuthService.registerDual({
                     name: this.form.name,
                     email: this.form.email,
                     password: this.form.password,

@@ -3,6 +3,8 @@ import Login from './pages/Login.vue';
 import Register from './pages/Register.vue';
 import Dashboard from './pages/Dashboard.vue';
 import MapPage from './pages/MapPage.vue';
+import Location from './pages/Location.vue';
+import Profile from './pages/Profile.vue';
 import RuasJalanIndex from './pages/ruasjalan/IndexNew.vue';
 import RuasJalanCreate from './pages/ruasjalan/CreateNew.vue';
 import RuasJalanEdit from './pages/ruasjalan/Edit.vue';
@@ -10,12 +12,20 @@ import RuasJalanShow from './pages/ruasjalan/Show.vue';
 import Settings from './pages/Settings.vue';
 import MarkersIndex from './pages/markers/Index.vue';
 import MarkersCreate from './pages/markers/Create.vue';
+import MarkersEdit from './pages/markers/Edit.vue';
 import LinesIndex from './pages/lines/Index.vue';
 import LinesCreate from './pages/lines/Create.vue';
+import LinesEdit from './pages/lines/Edit.vue';
 import PolygonsIndex from './pages/polygons/Index.vue';
 import PolygonsCreate from './pages/polygons/Create.vue';
+import PolygonsEdit from './pages/polygons/Edit.vue';
 import CirclesIndex from './pages/circles/Index.vue';
 import CirclesCreate from './pages/circles/Create.vue';
+import CirclesEdit from './pages/circles/Edit.vue';
+import MarkerCategories from './pages/categories/MarkerCategories.vue';
+import LineCategories from './pages/categories/LineCategories.vue';
+import PolygonCategories from './pages/categories/PolygonCategories.vue';
+import CircleCategories from './pages/categories/CircleCategories.vue';
 
 export default [
     {
@@ -43,6 +53,12 @@ export default [
         path: '/map',
         name: 'map',
         component: MapPage,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/location',
+        name: 'location',
+        component: Location,
         meta: { requiresAuth: true },
     },
     {
@@ -88,6 +104,12 @@ export default [
         meta: { requiresAuth: true },
     },
     {
+        path: '/markers/:id/edit',
+        name: 'markers.edit',
+        component: MarkersEdit,
+        meta: { requiresAuth: true },
+    },
+    {
         path: '/lines',
         name: 'lines',
         component: LinesIndex,
@@ -97,6 +119,12 @@ export default [
         path: '/lines/create',
         name: 'lines.create',
         component: LinesCreate,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/lines/:id/edit',
+        name: 'lines.edit',
+        component: LinesEdit,
         meta: { requiresAuth: true },
     },
     {
@@ -112,6 +140,12 @@ export default [
         meta: { requiresAuth: true },
     },
     {
+        path: '/polygons/:id/edit',
+        name: 'polygons.edit',
+        component: PolygonsEdit,
+        meta: { requiresAuth: true },
+    },
+    {
         path: '/circles',
         name: 'circles',
         component: CirclesIndex,
@@ -121,6 +155,42 @@ export default [
         path: '/circles/create',
         name: 'circles.create',
         component: CirclesCreate,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/circles/:id/edit',
+        name: 'circles.edit',
+        component: CirclesEdit,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/marker-categories',
+        name: 'marker-categories',
+        component: MarkerCategories,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/line-categories',
+        name: 'line-categories',
+        component: LineCategories,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/polygon-categories',
+        name: 'polygon-categories',
+        component: PolygonCategories,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/circle-categories',
+        name: 'circle-categories',
+        component: CircleCategories,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/profile',
+        name: 'profile',
+        component: Profile,
         meta: { requiresAuth: true },
     },
 ];

@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GeoFeatureController;
 use App\Http\Controllers\ApiAuthController;
+use App\Http\Controllers\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,18 @@ Route::get('/lokasi', function (Request $req) {
         ["id"=>1,"nama"=>"Gedung A","lat"=>-8.65,"lng"=>115.22],
         ["id"=>2,"nama"=>"Perpustakaan","lat"=>-8.64,"lng"=>115.23],
     ]);
+});
+
+// Protected Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Categories CRUD by type
+    Route::prefix('categories/{type}')->group(function () {
+        Route::get('/', [CategoryController::class, 'index']);
+        Route::post('/', [CategoryController::class, 'store']);
+        Route::get('/{id}', [CategoryController::class, 'show']);
+        Route::put('/{id}', [CategoryController::class, 'update']);
+        Route::delete('/{id}', [CategoryController::class, 'destroy']);
+    });
 });
 
 // API Geo Features - CRUD untuk semua jenis fitur geografis

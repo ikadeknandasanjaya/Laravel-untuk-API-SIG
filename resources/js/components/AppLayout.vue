@@ -12,28 +12,19 @@
                 </div>
                 <div class="top-bar-right">
                     <!-- Dark Mode Toggle -->
-                    <button @click="toggleDarkMode" class="dark-mode-toggle" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                    <button @click="toggleDarkMode" class="dark-mode-toggle" :title="isDarkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'">
                         <i :class="isDarkMode ? 'fas fa-sun' : 'fas fa-moon'"></i>
                     </button>
                     
                         <!-- User Menu -->
                         <div class="user-menu">
-                            <span class="greeting">Hello, {{ currentUser?.name || 'User' }}</span>
+                            <span class="greeting">Halo, {{ userName }}</span>
                             <div class="user-avatar" @click="toggleUserDropdown">
                                 <i class="fas fa-user-circle"></i>
                                 <div v-if="showUserDropdown" class="user-dropdown">
-                                    <router-link to="/profile" class="dropdown-item">
-                                        <i class="fas fa-user"></i>
-                                        Profile
-                                    </router-link>
-                                    <router-link to="/settings" class="dropdown-item">
-                                        <i class="fas fa-cog"></i>
-                                        Settings
-                                    </router-link>
-                                    <hr class="dropdown-divider">
-                                    <button @click="handleLogout" class="dropdown-item logout-btn">
+                                    <button @click="handleLogout" class="dropdown-item logout-btn" style="width: 100%; text-align: left;">
                                         <i class="fas fa-sign-out-alt"></i>
-                                        Logout
+                                        Keluar
                                     </button>
                                 </div>
                             </div>
@@ -68,17 +59,19 @@ export default {
         return {
             isDarkMode: false,
             sidebarCollapsed: false,
-            showUserDropdown: false
+            showUserDropdown: false,
+            user: null,
+            forceUpdateCounter: 0
         }
     },
     computed: {
         pageTitle() {
             const routeNames = {
-                'dashboard': 'Main Map',
-                'ruasjalan.index': 'Street Overview',
-                'ruasjalan.create': 'Add Street',
-                'ruasjalan.edit': 'Edit Street',
-                'ruasjalan.show': 'Street Details',
+                'dashboard': 'Peta Utama',
+                'ruasjalan.index': 'Daftar Ruas Jalan',
+                'ruasjalan.create': 'Tambah Ruas Jalan',
+                'ruasjalan.edit': 'Edit Ruas Jalan',
+                'ruasjalan.show': 'Detail Ruas Jalan',
                 'markers': 'Marker Overview',
                 'markers.create': 'Add Marker',
                 'lines': 'Line Overview',
@@ -87,24 +80,25 @@ export default {
                 'polygons.create': 'Add Polygon',
                 'circles': 'Circle Overview',
                 'circles.create': 'Add Circle',
-                'profile': 'Profile',
-                'settings': 'Settings'
+                'profile': 'Profil',
+                'settings': 'Pengaturan'
             };
             return routeNames[this.$route.name] || 'GIS Bali';
         },
         currentUser() {
+            this.forceUpdateCounter; // Dependency for reactivity
             return AuthService.getCurrentUser();
+        },
+        userName() {
+            this.forceUpdateCounter; // Dependency for reactivity
+            const user = this.user || AuthService.getCurrentUser();
+            console.log('🔍 userName computed - user:', user, 'localUser:', AuthService.localUser, 'remoteUser:', AuthService.remoteUser);
+            if (user && user.name) {
+                return user.name;
+            }
+            const remoteToken = localStorage.getItem('remote_auth_token');
+            return remoteToken ? 'Pengguna' : 'Guest';
         }
-    },
-    mounted() {
-        // Load dark mode preference from localStorage
-        const savedDarkMode = localStorage.getItem('darkMode');
-        if (savedDarkMode !== null) {
-            this.isDarkMode = JSON.parse(savedDarkMode);
-        }
-        
-        // Apply dark mode to document
-        this.applyDarkMode();
     },
     methods: {
         toggleDarkMode() {
@@ -131,6 +125,22 @@ export default {
                 console.error('Logout error:', error);
                 toast.error('Terjadi kesalahan saat logout.', 'Error');
             }
+        },
+        refreshUserData() {
+            const user = AuthService.getCurrentUser();
+            if (user) {
+                this.user = user;
+            }
+            // Force recompute
+            this.forceUpdateCounter++;
+        },
+        async loadUserData() {
+            // Refresh user data from API first
+            console.log('📥 loadUserData called - refreshing from API...');
+            await AuthService.refreshUserData();
+            // Then update local component state
+            console.log('✅ loadUserData - after refresh, user:', AuthService.getCurrentUser());
+            this.refreshUserData();
         }
     },
     mounted() {
@@ -142,6 +152,9 @@ export default {
         
         // Apply dark mode to document
         this.applyDarkMode();
+
+        // Load user data
+        this.loadUserData();
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
