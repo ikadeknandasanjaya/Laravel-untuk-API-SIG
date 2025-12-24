@@ -60,24 +60,24 @@
 
                 <!-- Marker Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Penanda</div>
+                    <div class="section-title" v-if="!isCollapsed">Marker</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/markers" class="nav-link" :class="{ active: $route.name?.includes('marker') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Daftar Penanda</span>
+                                <span v-if="!isCollapsed">Daftar Marker</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/marker-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Kategori Penanda</span>
+                                <span v-if="!isCollapsed">Kategori Marker</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/markers/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Tambah Penanda</span>
+                                <span v-if="!isCollapsed">Tambah Marker</span>
 
                             </router-link>
                         </li>
@@ -86,24 +86,24 @@
 
                 <!-- Line Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Garis</div>
+                    <div class="section-title" v-if="!isCollapsed">Line</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/lines" class="nav-link" :class="{ active: $route.name?.includes('line') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Daftar Garis</span>
+                                <span v-if="!isCollapsed">Daftar Line</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/line-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Kategori Garis</span>
+                                <span v-if="!isCollapsed">Kategori Line</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/lines/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Tambah Garis</span>
+                                <span v-if="!isCollapsed">Tambah Line</span>
                             </router-link>
                         </li>
                     </ul>
@@ -111,24 +111,24 @@
 
                 <!-- Polygon Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Poligon</div>
+                    <div class="section-title" v-if="!isCollapsed">Polygon</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/polygons" class="nav-link" :class="{ active: $route.name?.includes('polygon') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Daftar Poligon</span>
+                                <span v-if="!isCollapsed">Daftar Polygon</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/polygon-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Kategori Poligon</span>
+                                <span v-if="!isCollapsed">Kategori Polygon</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/polygons/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Tambah Poligon</span>
+                                <span v-if="!isCollapsed">Tambah Polygon</span>
                             </router-link>
                         </li>
                     </ul>
@@ -136,24 +136,24 @@
 
                 <!-- Circle Section -->
                 <div class="nav-section">
-                    <div class="section-title" v-if="!isCollapsed">Lingkaran</div>
+                    <div class="section-title" v-if="!isCollapsed">Circle</div>
                     <ul class="nav-list">
                         <li class="nav-item">
                             <router-link to="/circles" class="nav-link" :class="{ active: $route.name?.includes('circle') }">
                                 <i class="fas fa-list"></i>
-                                <span v-if="!isCollapsed">Daftar Lingkaran</span>
+                                <span v-if="!isCollapsed">Daftar Circle</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/circle-categories" class="nav-link">
                                 <i class="fas fa-tags"></i>
-                                <span v-if="!isCollapsed">Kategori Lingkaran</span>
+                                <span v-if="!isCollapsed">Kategori Circle</span>
                             </router-link>
                         </li>
                         <li class="nav-item">
                             <router-link to="/circles/create" class="nav-link">
                                 <i class="fas fa-plus"></i>
-                                <span v-if="!isCollapsed">Tambah Lingkaran</span>
+                                <span v-if="!isCollapsed">Tambah Circle</span>
 
                             </router-link>
                         </li>

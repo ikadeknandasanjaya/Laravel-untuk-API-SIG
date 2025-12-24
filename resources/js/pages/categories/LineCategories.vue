@@ -16,7 +16,7 @@
             <!-- Loading State -->
             <div v-if="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                <p class="mt-4 text-gray-600">Loading categories...</p>
+                <p class="mt-4 text-gray-600">Memuat kategori...</p>
             </div>
 
             <!-- Categories Table -->
@@ -25,15 +25,15 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">No</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nama</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Deskripsi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <tr v-if="categories.length === 0">
                             <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                                No categories found
+                                Tidak ada kategori ditemukan
                             </td>
                         </tr>
                         <tr v-for="(item, index) in categories" :key="item.id" class="hover:bg-gray-50">
@@ -42,7 +42,7 @@
                             <td class="px-6 py-4 text-sm text-gray-600">{{ item.description || '-' }}</td>
                             <td class="px-6 py-4 text-sm space-x-2">
                                 <button @click="editCategory(item)" class="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
-                                <button @click="deleteCategory(item.id)" class="text-red-600 hover:text-red-800 font-medium">Delete</button>
+                                <button @click="deleteCategory(item.id)" class="text-red-600 hover:text-red-800 font-medium">Hapus</button>
                             </td>
                         </tr>
                     </tbody>
@@ -52,22 +52,22 @@
             <!-- Modal for Create/Edit -->
             <div v-if="showModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-                    <h2 class="text-xl font-bold text-gray-900 mb-4">{{ editingId ? 'Edit Category' : 'Add Category' }}</h2>
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">{{ editingId ? 'Edit Kategori' : 'Tambah Kategori' }}</h2>
                     <form @submit.prevent="saveCategory" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                             <input v-model="form.name" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
                             <textarea v-model="form.description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                         </div>
                         <div class="flex gap-3 justify-end">
                             <button @click="closeModal" type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                Cancel
+                                Batal
                             </button>
                             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                                {{ editingId ? 'Update' : 'Create' }}
+                                {{ editingId ? 'Perbarui' : 'Buat' }}
                             </button>
                         </div>
                     </form>

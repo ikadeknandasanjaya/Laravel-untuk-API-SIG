@@ -329,7 +329,10 @@ export default {
             // Map
             map: null,
             drawnItems: null,
-            currentPath: null
+            currentPath: null,
+            
+            // Coordinate cache untuk menghindari repeated requests
+            coordinateCache: {}
         }
     },
     computed: {
@@ -349,7 +352,132 @@ export default {
         await this.loadInitialData();
         this.initMap();
     },
+    watch: {
+        'form.desa_id': function(newVal) {
+            if (newVal && this.desaList.length > 0) {
+                const selectedDesa = this.desaList.find(d => d.id === newVal);
+                if (selectedDesa) {
+                    this.zoomToDesa(selectedDesa.value);
+                }
+            }
+        }
+    },
     methods: {
+        zoomToProvince(provinceName) {
+            // Predefined coordinates for Indonesian provinces
+            const provinceCoords = {
+                'Aceh': [-5.135, 96.7246],
+                'Sumatera Utara': [3.0973, 101.6228],
+                'Sumatera Barat': [-0.3031, 100.6674],
+                'Riau': [0.3031, 101.4374],
+                'Jambi': [-1.4852, 103.6122],
+                'Sumatera Selatan': [-3.6191, 104.7453],
+                'Lampung': [-4.5586, 105.4067],
+                'Kepulauan Bangka Belitung': [-2.7421, 107.5892],
+                'Jawa Barat': [-6.9271, 107.5705],
+                'Jawa Tengah': [-7.1506, 110.1429],
+                'Jawa Timur': [-7.2575, 112.7521],
+                'DKI Jakarta': [-6.2088, 106.8456],
+                'DI Yogyakarta': [-7.7956, 110.3695],
+                'Banten': [-6.2383, 106.1537],
+                'Bali': [-8.4095, 115.1889],
+                'Nusa Tenggara Barat': [-8.6500, 117.3616],
+                'Nusa Tenggara Timur': [-8.6573, 120.8758],
+                'Kalimantan Barat': [0.2127, 111.9673],
+                'Kalimantan Tengah': [-1.6815, 113.7618],
+                'Kalimantan Selatan': [-3.3200, 114.5900],
+                'Kalimantan Timur': [0.5306, 116.7283],
+                'Sulawesi Utara': [1.4527, 124.8581],
+                'Sulawesi Tengah': [-1.4286, 119.8596],
+                'Sulawesi Selatan': [-5.1477, 119.4327],
+                'Sulawesi Tenggara': [-4.0511, 122.5808],
+                'Gorontalo': [0.7167, 122.4333],
+                'Sulawesi Barat': [-2.1338, 119.2471],
+                'Maluku': [-3.2, 129.5],
+                'Maluku Utara': [0.8028, 127.5363],
+                'Papua': [-3.1913, 133.8687],
+                'Papua Barat': [-1.3554, 132.7562]
+            };
+            
+            const coords = provinceCoords[provinceName];
+            if (coords && this.map) {
+                this.map.setView(coords, 10);
+            }
+        },
+
+        zoomToKabupaten(kabupatenName) {
+            // Kabupaten coordinates within Bali (since default is Bali)
+            const kabupatenCoords = {
+                'Badung': [-8.65, 115.21],
+                'Bangli': [-8.25, 115.37],
+                'Buleleng': [-8.12, 115.04],
+                'Denpasar': [-8.65, 115.21],
+                'Gianyar': [-8.50, 115.36],
+                'Jembrana': [-8.33, 114.36],
+                'Karangasem': [-8.40, 115.48],
+                'Klungkung': [-8.48, 115.36],
+                'Tabanan': [-8.52, 115.13],
+                'Ubud': [-8.51, 115.26]
+            };
+            
+            const coords = kabupatenCoords[kabupatenName];
+            if (coords && this.map) {
+                this.map.setView(coords, 12);
+            } else if (this.map) {
+                // Fallback to Bali zoom if not found
+                this.map.setView([-8.4095, 115.1889], 10);
+            }
+        },
+
+        zoomToKecamatan(kecamatanName) {
+            // Try to geocode kecamatan name
+            if (this.map) {
+                this.geocodeAndZoom(kecamatanName, 14, `Kecamatan ${kecamatanName}`);
+            }
+        },
+
+        zoomToDesa(desaName) {
+            // Try to geocode desa name
+            if (this.map) {
+                this.geocodeAndZoom(desaName, 15, `Siap untuk menandai ruas jalan di ${desaName}. Gunakan ikon "Draw a polyline" di pojok kiri.`);
+            }
+        },
+
+        async geocodeAndZoom(locationName, zoomLevel, message) {
+            try {
+                // Check cache first
+                const cacheKey = locationName.toLowerCase();
+                if (this.coordinateCache[cacheKey]) {
+                    const coords = this.coordinateCache[cacheKey];
+                    this.map.setView(coords, zoomLevel);
+                    toast.info(message, 'Info');
+                    return;
+                }
+
+                // Use Nominatim (OpenStreetMap free geocoding)
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationName + ', Bali, Indonesia')}&format=json&limit=1`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                    // Cache the result
+                    this.coordinateCache[cacheKey] = coords;
+                    this.map.setView(coords, zoomLevel);
+                    toast.info(message, 'Info');
+                } else {
+                    // Fallback to just zoom in
+                    this.map.setZoom(zoomLevel);
+                    toast.info(`${message} (Lokasi pasti tidak ditemukan, silakan manual di peta)`, 'Info');
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                // Fallback to just zoom in
+                if (this.map) {
+                    this.map.setZoom(zoomLevel);
+                    toast.info(message, 'Info');
+                }
+            }
+        },
         async loadInitialData() {
             this.loadingProvinsi = true;
             this.loadingMaster = true;
@@ -401,6 +529,10 @@ export default {
                 this.form.kabupaten_id = '';
                 this.form.kecamatan_id = '';
                 this.form.desa_id = '';
+                // Reset map to Bali
+                if (this.map) {
+                    this.map.setView([-8.4095, 115.1889], 10);
+                }
                 return;
             }
 
@@ -414,6 +546,12 @@ export default {
                     this.form.kabupaten_id = '';
                     this.form.kecamatan_id = '';
                     this.form.desa_id = '';
+                    
+                    // Get selected province name and zoom to it
+                    const selectedProvinsi = this.provinsiList.find(p => p.id === this.form.provinsi_id);
+                    if (selectedProvinsi) {
+                        this.zoomToProvince(selectedProvinsi.provinsi);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading kabupaten:', error);
@@ -429,6 +567,11 @@ export default {
                 this.desaList = [];
                 this.form.kecamatan_id = '';
                 this.form.desa_id = '';
+                // Reset to province view
+                const selectedProvinsi = this.provinsiList.find(p => p.id === this.form.provinsi_id);
+                if (selectedProvinsi && this.map) {
+                    this.zoomToProvince(selectedProvinsi.provinsi);
+                }
                 return;
             }
 
@@ -440,6 +583,12 @@ export default {
                     this.desaList = [];
                     this.form.kecamatan_id = '';
                     this.form.desa_id = '';
+                    
+                    // Get selected kabupaten name and zoom to it
+                    const selectedKabupaten = this.kabupatenList.find(k => k.id === this.form.kabupaten_id);
+                    if (selectedKabupaten) {
+                        this.zoomToKabupaten(selectedKabupaten.value);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading kecamatan:', error);
@@ -453,6 +602,11 @@ export default {
             if (!this.form.kecamatan_id) {
                 this.desaList = [];
                 this.form.desa_id = '';
+                // Reset to kabupaten view
+                const selectedKabupaten = this.kabupatenList.find(k => k.id === this.form.kabupaten_id);
+                if (selectedKabupaten && this.map) {
+                    this.zoomToKabupaten(selectedKabupaten.value);
+                }
                 return;
             }
 
@@ -462,6 +616,12 @@ export default {
                 if (result.success) {
                     this.desaList = result.data;
                     this.form.desa_id = '';
+                    
+                    // Get selected kecamatan name and zoom to it
+                    const selectedKecamatan = this.kecamatanList.find(k => k.id === this.form.kecamatan_id);
+                    if (selectedKecamatan) {
+                        this.zoomToKecamatan(selectedKecamatan.value);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading desa:', error);
