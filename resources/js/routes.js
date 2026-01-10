@@ -26,6 +26,10 @@ import MarkerCategories from './pages/categories/MarkerCategories.vue';
 import LineCategories from './pages/categories/LineCategories.vue';
 import PolygonCategories from './pages/categories/PolygonCategories.vue';
 import CircleCategories from './pages/categories/CircleCategories.vue';
+import CustomanIndex from './pages/customan/Index.vue';
+import CustomanCreate from './pages/customan/Create.vue';
+import CustomanEdit from './pages/customan/Edit.vue';
+import CustomanShow from './pages/customan/Show.vue';
 
 export default [
     {
@@ -191,6 +195,30 @@ export default [
         path: '/profile',
         name: 'profile',
         component: Profile,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/customan',
+        name: 'customan',
+        component: CustomanIndex,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/customan/create',
+        name: 'customan.create',
+        component: CustomanCreate,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/customan/:id/edit',
+        name: 'customan.edit',
+        component: CustomanEdit,
+        meta: { requiresAuth: true },
+    },
+    {
+        path: '/customan/:id',
+        name: 'customan.show',
+        component: CustomanShow,
         meta: { requiresAuth: true },
     },
 ];

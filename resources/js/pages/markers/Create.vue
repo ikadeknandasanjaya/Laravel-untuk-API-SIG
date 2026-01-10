@@ -65,8 +65,8 @@
                                     <input 
                                         type="number" 
                                         id="latitude"
-                                        v-model="form.latitude"
-                                        step="any"
+                                        v-model.number="form.latitude"
+                                        step="0.000001"
                                         placeholder="-8.4095"
                                         required
                                         @input="updateMapMarker"
@@ -77,8 +77,8 @@
                                     <input 
                                         type="number" 
                                         id="longitude"
-                                        v-model="form.longitude"
-                                        step="any"
+                                        v-model.number="form.longitude"
+                                        step="0.000001"
                                         placeholder="115.1889"
                                         required
                                         @input="updateMapMarker"
@@ -108,7 +108,7 @@
                                     <div 
                                         v-for="icon in availableIcons" 
                                         :key="icon.class"
-                                        @click="form.icon = icon.class"
+                                        @click="selectIcon(icon.class)"
                                         :class="{ active: form.icon === icon.class }"
                                         class="icon-option"
                                     >
@@ -147,6 +147,19 @@
                         </div>
                     </form>
                 </div>
+
+                <!-- Map Section -->
+                <div class="map-section">
+                    <div class="map-header">
+                        <h3>Select Location on Map</h3>
+                        <p class="map-instructions">Click on the map to set marker location</p>
+                    </div>
+                    <div ref="mapContainer" class="map-container"></div>
+                    <div class="map-info" :class="{ 'has-location': form.latitude && form.longitude }">
+                        <i class="fas fa-info-circle"></i>
+                        <span><strong>Selected:</strong> {{ selectedCoordinates }}</span>
+                    </div>
+                </div>
             </div> 
         </div>
     </AppLayout>
@@ -155,6 +168,7 @@
 <script>
 import AppLayout from '../../components/AppLayout.vue';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import GeoFeatureService from '../../services/GeoFeatureService.js';
 import toast from '../../utils/toast.js';
 
@@ -236,19 +250,40 @@ export default {
             ]
         }
     },
+    computed: {
+        selectedCoordinates() {
+            if (this.form.latitude && this.form.longitude) {
+                return `${parseFloat(this.form.latitude).toFixed(6)}, ${parseFloat(this.form.longitude).toFixed(6)}`;
+            }
+            return 'No location selected';
+        }
+    },
     async mounted() {
         await this.loadCategories();
         this.initMap();
     },
     watch: {
-        'form.icon'() {
+        'form.icon'(newVal, oldVal) {
+            console.log('Watch: Icon changed from', oldVal, 'to', newVal);
             this.updateMapMarker();
         },
-        'form.color'() {
+        'form.color'(newVal, oldVal) {
+            console.log('Watch: Color changed from', oldVal, 'to', newVal);
             this.updateMapMarker();
         }
     },
     methods: {
+        selectIcon(iconClass) {
+            console.log('=== Icon Selection ===');
+            console.log('Icon selected:', iconClass);
+            console.log('Before:', this.form.icon);
+            
+            // Direct assignment works in Vue 3
+            this.form.icon = iconClass;
+            
+            console.log('After:', this.form.icon);
+            console.log('Icon changed:', this.form.icon === iconClass);
+        },
         async loadCategories() {
             try {
                 // Local backend categories
@@ -278,21 +313,47 @@ export default {
             
             // Add click event to set marker location
             this.map.on('click', (e) => {
-                this.form.latitude = e.latlng.lat.toFixed(6);
-                this.form.longitude = e.latlng.lng.toFixed(6);
-                this.updateMapMarker();
+                console.log('Map clicked at:', e.latlng);
+                const lat = parseFloat(e.latlng.lat.toFixed(6));
+                const lng = parseFloat(e.latlng.lng.toFixed(6));
+                
+                // Direct assignment works in Vue 3
+                this.form.latitude = lat;
+                this.form.longitude = lng;
+                
+                console.log('Form updated:', this.form.latitude, this.form.longitude);
+                
+                // Update marker
+                this.$nextTick(() => {
+                    this.updateMapMarker();
+                });
             });
         },
         updateMapMarker() {
+            console.log('=== updateMapMarker called ===');
+            console.log('Map exists:', !!this.map);
+            console.log('Latitude:', this.form.latitude, 'Longitude:', this.form.longitude);
+            
+            if (!this.map) {
+                console.error('Map not initialized!');
+                return;
+            }
+            
             if (this.form.latitude && this.form.longitude) {
                 const lat = parseFloat(this.form.latitude);
                 const lng = parseFloat(this.form.longitude);
                 
+                console.log('Parsed lat:', lat, 'lng:', lng);
+                console.log('isNaN check:', !isNaN(lat) && !isNaN(lng));
+                
                 if (!isNaN(lat) && !isNaN(lng)) {
                     // Remove existing marker
                     if (this.marker) {
+                        console.log('Removing existing marker');
                         this.map.removeLayer(this.marker);
                     }
+                    
+                    console.log('Creating new marker with icon:', this.form.icon, 'color:', this.form.color);
                     
                     // Create custom icon with selected color
                     const customIcon = L.divIcon({
@@ -323,9 +384,17 @@ export default {
                     // Add new marker with custom icon
                     this.marker = L.marker([lat, lng], { icon: customIcon }).addTo(this.map);
                     
+                    console.log('Marker added to map:', this.marker);
+                    
                     // Center map on marker
                     this.map.setView([lat, lng], Math.max(this.map.getZoom(), 13));
+                    
+                    console.log('Map view updated to:', lat, lng);
+                } else {
+                    console.log('Invalid coordinates - NaN detected');
                 }
+            } else {
+                console.log('No latitude or longitude in form');
             }
         },
         getCurrentLocation() {
@@ -600,33 +669,51 @@ export default {
     border: 2px solid #e5e7eb;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    user-select: none;
 }
 
-.icon-option:hover,
+.icon-option:hover {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    cursor: pointer;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
 .icon-option.active {
     border-color: #3b82f6;
-    background: #eff6ff;
+    background: #dbeafe;
+    border-width: 3px;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .icon-option i {
     font-size: 1.25rem;
     margin-bottom: 0.25rem;
     color: #6b7280;
+    transition: all 0.3s ease;
+}
+
+.icon-option:active {
+    transform: scale(0.95);
 }
 
 .icon-option.active i {
-    color: #3b82f6;
+    color: #2563eb;
+    transform: scale(1.1);
 }
 
 .icon-option span {
     font-size: 0.75rem;
     color: #6b7280;
+    transition: all 0.2s;
 }
 
 .icon-option.active span {
-    color: #3b82f6;
-    font-weight: 500;
+    color: #2563eb;
+    font-weight: 600;
 }
 
 .color-selector {
@@ -697,6 +784,30 @@ export default {
     padding: 1rem 1.5rem;
     background: #f9fafb;
     border-top: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    transition: all 0.3s ease;
+}
+
+.map-info.has-location {
+    background: #dbeafe;
+    border-top-color: #3b82f6;
+    color: #1e40af;
+}
+
+.map-info i {
+    color: #6b7280;
+}
+
+.map-info.has-location i {
+    color: #3b82f6;
+}
+
+.map-info strong {
+    font-weight: 600;
 }
 
 .coordinate-display {

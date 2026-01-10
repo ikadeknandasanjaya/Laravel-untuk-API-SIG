@@ -160,6 +160,32 @@
                     </ul>
                 </div>
 
+                <!-- Customan Section -->
+                <div class="nav-section">
+                    <div class="section-title" v-if="!isCollapsed">Customan</div>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <router-link to="/customan" class="nav-link" :class="{ active: $route.name?.includes('customan') }">
+                                <i class="fas fa-list"></i>
+                                <span v-if="!isCollapsed">Daftar Customan</span>
+                            </router-link>
+                        </li>
+                        <li class="nav-item">
+                            <router-link to="/customan-categories" class="nav-link">
+                                <i class="fas fa-tags"></i>
+                                <span v-if="!isCollapsed">Kategori Customan</span>
+                            </router-link>
+                        </li>
+                        <li class="nav-item">
+                            <router-link to="/customan/create" class="nav-link">
+                                <i class="fas fa-plus"></i>
+                                <span v-if="!isCollapsed">Tambah Customan</span>
+
+                            </router-link>
+                        </li>
+                    </ul>
+                </div>
+
                 <!-- Profile & Settings -->
                 <div class="nav-section">
                     <div class="section-title" v-if="!isCollapsed">Profil</div>

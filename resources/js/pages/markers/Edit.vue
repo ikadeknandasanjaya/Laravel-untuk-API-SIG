@@ -15,12 +15,13 @@
                 </div>
             </div>
 
-            <div v-if="loading" class="loading-state">
-                <div class="spinner"></div>
-                <p>Loading marker data...</p>
-            </div>
-
-            <div v-else class="form-layout">
+            <div class="form-layout" :class="{ 'is-loading': loading }">
+                <!-- Loading Overlay -->
+                <div v-if="loading" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <p>Loading marker data...</p>
+                </div>
+                
                 <!-- Form Section -->
                 <div class="form-section">
                     <form @submit.prevent="updateMarker" class="marker-form">
@@ -70,8 +71,8 @@
                                     <input 
                                         type="number" 
                                         id="latitude"
-                                        v-model="form.latitude"
-                                        step="any"
+                                        v-model.number="form.latitude"
+                                        step="0.000001"
                                         placeholder="-8.4095"
                                         required
                                         @input="updateMapMarker"
@@ -82,8 +83,8 @@
                                     <input 
                                         type="number" 
                                         id="longitude"
-                                        v-model="form.longitude"
-                                        step="any"
+                                        v-model.number="form.longitude"
+                                        step="0.000001"
                                         placeholder="115.1889"
                                         required
                                         @input="updateMapMarker"
@@ -113,7 +114,7 @@
                                     <div 
                                         v-for="icon in availableIcons" 
                                         :key="icon.class"
-                                        @click="form.icon = icon.class"
+                                        @click="selectIcon(icon.class)"
                                         :class="{ active: form.icon === icon.class }"
                                         class="icon-option"
                                     >
@@ -179,6 +180,7 @@
 <script>
 import AppLayout from '../../components/AppLayout.vue';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import GeoFeatureService from '../../services/GeoFeatureService.js';
 import toast from '../../utils/toast.js';
 
@@ -229,14 +231,26 @@ export default {
         };
     },
     async mounted() {
+        // Initialize map first (map container is always in DOM now)
+        this.$nextTick(() => {
+            this.initMap();
+        });
+        
+        // Load marker data
         await this.loadMarkerData();
-        this.initMap();
+        
+        // Update marker after data loaded
+        this.$nextTick(() => {
+            this.updateMapMarker();
+        });
     },
     watch: {
-        'form.icon'() {
+        'form.icon'(newVal, oldVal) {
+            console.log('Watch: Icon changed from', oldVal, 'to', newVal);
             this.updateMapMarker();
         },
-        'form.color'() {
+        'form.color'(newVal, oldVal) {
+            console.log('Watch: Color changed from', oldVal, 'to', newVal);
             this.updateMapMarker();
         }
     },
@@ -276,22 +290,51 @@ export default {
             }
         },
         initMap() {
-            this.map = L.map(this.$refs.mapContainer).setView(
-                [this.form.latitude || -8.4095, this.form.longitude || 115.1889],
-                12
-            );
+            console.log('=== initMap called ===');
+            console.log('Map container ref:', this.$refs.mapContainer);
+            
+            if (!this.$refs.mapContainer) {
+                console.error('Map container not found!');
+                return;
+            }
+            
+            try {
+                this.map = L.map(this.$refs.mapContainer).setView(
+                    [this.form.latitude || -8.4095, this.form.longitude || 115.1889],
+                    12
+                );
+                
+                console.log('Map instance created:', this.map);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(this.map);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(this.map);
+                
+                console.log('Tile layer added');
+                
+                // Force map to recalculate size
+                setTimeout(() => {
+                    if (this.map) {
+                        this.map.invalidateSize();
+                        console.log('Map size invalidated');
+                    }
+                }, 100);
 
-            this.map.on('click', (e) => {
-                this.form.latitude = parseFloat(e.latlng.lat.toFixed(6));
-                this.form.longitude = parseFloat(e.latlng.lng.toFixed(6));
+                this.map.on('click', (e) => {
+                    console.log('Map clicked at:', e.latlng);
+                    this.form.latitude = parseFloat(e.latlng.lat.toFixed(6));
+                    this.form.longitude = parseFloat(e.latlng.lng.toFixed(6));
+                    console.log('Form updated:', this.form.latitude, this.form.longitude);
+                    this.$nextTick(() => {
+                        this.updateMapMarker();
+                    });
+                });
+
                 this.updateMapMarker();
-            });
-
-            this.updateMapMarker();
+            } catch (error) {
+                console.error('Error initializing map:', error);
+            }
         },
         updateMapMarker() {
             if (this.marker) {
@@ -346,6 +389,13 @@ export default {
             this.form.latitude = -8.4095;
             this.form.longitude = 115.1889;
             this.updateMapMarker();
+        },
+        selectIcon(iconClass) {
+            console.log('=== Icon Selection ===');
+            console.log('Icon selected:', iconClass);
+            console.log('Before:', this.form.icon);
+            this.form.icon = iconClass;
+            console.log('After:', this.form.icon);
         },
         resetForm() {
             this.form = JSON.parse(JSON.stringify(this.originalForm));
@@ -513,13 +563,24 @@ export default {
     background: #eff6ff;
 }
 
-.loading-state {
+.form-layout {
+    position: relative;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 400px;
     gap: 1rem;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
 }
 
 .spinner {
@@ -629,26 +690,46 @@ export default {
     cursor: pointer;
     transition: all 0.2s;
     gap: 0.5rem;
+    background: #ffffff;
 }
 
 .icon-option:hover {
-    border-color: #3b82f6;
+    border-color: #93c5fd;
     background: #eff6ff;
+    cursor: pointer;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
 .icon-option.active {
     border-color: #3b82f6;
-    background: #eff6ff;
+    background: #dbeafe;
+    border-width: 3px;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.icon-option:active {
+    transform: scale(0.95);
 }
 
 .icon-option i {
     font-size: 1.5rem;
+    color: #6b7280;
+}
+
+.icon-option.active i {
     color: #3b82f6;
 }
 
 .icon-option span {
     font-size: 0.75rem;
     color: #6b7280;
+}
+
+.icon-option.active span {
+    color: #3b82f6;
+    font-weight: 500;
 }
 
 .color-selector {
