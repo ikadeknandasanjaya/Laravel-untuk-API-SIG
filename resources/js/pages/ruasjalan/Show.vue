@@ -47,7 +47,7 @@
                 <div v-if="ruasJalan" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Informasi Utama -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                             <h2 class="text-base font-semibold text-gray-900 flex items-center">
                                 <i class="fas fa-road text-blue-600 mr-2"></i>
@@ -92,15 +92,15 @@
                             <dl class="space-y-3">
                                 <div class="flex justify-between py-2 border-b border-gray-100">
                                     <dt class="text-sm text-gray-600">Kondisi Eksisting</dt>
-                                    <dd class="text-sm font-semibold text-gray-900">{{ getEksistingName(ruasJalan.eksisting_id) || '-' }}</dd>
+                                    <dd class="text-sm font-semibold text-gray-900">{{ getEksistingName(ruasJalan.eksisting_id) }}</dd>
                                 </div>
                                 <div class="flex justify-between py-2 border-b border-gray-100">
                                     <dt class="text-sm text-gray-600">Kondisi Jalan</dt>
-                                    <dd class="text-sm font-semibold text-gray-900">{{ getKondisiName(ruasJalan.kondisi_id) || '-' }}</dd>
+                                    <dd class="text-sm font-semibold text-gray-900">{{ getKondisiName(ruasJalan.kondisi_id) }}</dd>
                                 </div>
                                 <div class="flex justify-between py-2 border-b border-gray-100">
                                     <dt class="text-sm text-gray-600">Jenis Jalan</dt>
-                                    <dd class="text-sm font-semibold text-gray-900">{{ getJenisJalanName(ruasJalan.jenisjalan_id) || '-' }}</dd>
+                                    <dd class="text-sm font-semibold text-gray-900">{{ getJenisJalanName(ruasJalan.jenisjalan_id) }}</dd>
                                 </div>
                                 <div class="flex justify-between py-2">
                                     <dt class="text-sm text-gray-600">Keterangan</dt>
@@ -182,11 +182,11 @@ export default {
             polylineLayer: null,
             eksistingList: [],
             kondisiList: [],
-            jenisJalanList: [],
+            jenisJalanList: []
         };
     },
     async mounted() {
-        console.log('🚀 Show.vue mounted');
+        console.log('Show.vue mounted');
         await Promise.all([this.loadMasterData(), this.loadData()]);
     },
     beforeUnmount() {
@@ -245,20 +245,20 @@ export default {
         async loadData() {
             try {
                 const id = this.$route.params.id;
-                console.log('📍 Loading ruas jalan detail for ID:', id);
+                console.log('Loading ruas jalan detail for ID:', id);
                 
                 const remoteToken = localStorage.getItem('remote_auth_token');
-                console.log('🔑 Remote token from localStorage:', remoteToken ? 'Present (' + remoteToken.substring(0, 20) + '...)' : 'MISSING!');
+                console.log('Remote token from localStorage:', remoteToken ? 'Present (' + remoteToken.substring(0, 20) + '...)' : 'MISSING!');
                 
                 const result = await RuasJalanService.getRuasJalanById(id);
                 
-                console.log('📦 API Response:', result);
+                console.log('API Response:', result);
                 
                 if (result.success) {
                     this.ruasJalan = result.data.ruasjalan;
-                    console.log('✅ Data loaded successfully:', this.ruasJalan);
+                    console.log('Data loaded successfully:', this.ruasJalan);
                 } else {
-                    console.error('❌ API Error:', result.message);
+                    console.error('API Error:', result.message);
                     toast.error(result.message || 'Gagal memuat data', 'Error');
                 }
             } catch (error) {
@@ -271,7 +271,7 @@ export default {
                 console.log('⏳ Waiting for DOM to be ready...');
                 await this.$nextTick();
                 await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms for DOM rendering
-                console.log('🎯 Calling initializeMap...');
+                console.log('Calling initializeMap...');
                 this.initializeMap();
             }
         },
@@ -280,7 +280,7 @@ export default {
             // Check if map element exists
             const mapElement = document.getElementById('map');
             if (!mapElement) {
-                console.warn('⚠️ Map element not found in DOM');
+                console.warn('Map element not found in DOM');
                 return;
             }
 
@@ -299,7 +299,7 @@ export default {
                     zoom: 10
                 });
 
-                console.log('✅ Map instance created:', this.map);
+                console.log('Map instance created:', this.map);
 
                 // Add tile layer
                 const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -308,38 +308,45 @@ export default {
                 });
                 
                 tileLayer.addTo(this.map);
-                console.log('✅ Tile layer added');
+                console.log('Tile layer added');
 
                 // Invalidate map size
                 this.map.invalidateSize();
-                console.log('✅ Map size invalidated');
+                console.log('Map size invalidated');
 
                 // If no data, just show empty map
                 if (!this.ruasJalan || !this.ruasJalan.paths) {
-                    console.log('⚠️ No paths data to display');
+                    console.log('No paths data to display');
                     return;
                 }
 
                 // Decode the polyline
                 const decoded = polyline.decode(this.ruasJalan.paths);
-                console.log('📍 Decoded polyline points:', decoded.length, decoded);
+                console.log('Decoded polyline points:', decoded.length, decoded);
                 
                 // Convert to Leaflet LatLng format
                 const latlngs = decoded.map(point => [point[0], point[1]]);
-                console.log('📍 LatLngs:', latlngs);
+                console.log('LatLngs:', latlngs);
+                
+         
+                
+                const firstPoint = latlngs[0];
+                const lastPoint = latlngs[latlngs.length - 1];
+                
+           
                 
                 // Create polyline
                 this.polylineLayer = L.polyline(latlngs, {
                     color: '#3b82f6',
                     weight: 4,
-                    opacity: 0.8
+                    opacity: 0.8,
                 }).addTo(this.map);
 
-                console.log('✅ Polyline rendered');
+                console.log('Polyline rendered');
 
                 // Fit map bounds to polyline
                 const bounds = this.polylineLayer.getBounds();
-                console.log('📍 Polyline bounds:', bounds);
+                console.log('Polyline bounds:', bounds);
                 
                 this.map.fitBounds(bounds, {
                     padding: [50, 50]
@@ -354,10 +361,10 @@ export default {
                     </div>
                 `;
                 this.polylineLayer.bindPopup(popupContent).openPopup();
-                console.log('✅ Map initialized successfully');
+                console.log('Map initialized successfully');
 
             } catch (error) {
-                console.error('❌ Error initializing map:', error);
+                console.error('Error initializing map:', error);
                 console.error('Stack:', error.stack);
                 toast.warning('Gagal menampilkan peta', 'Peringatan');
             }

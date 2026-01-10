@@ -1,253 +1,382 @@
 <template>
-    <Layout>
-        <div class="py-10">
-            <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
-                <div class="mb-6 flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-gray-900">Tambah Ruas Jalan</h1>
-                        <p class="mt-1 text-sm text-gray-500">
-                            Data akan dikirim langsung ke endpoint <code class="text-[10px] bg-gray-100 px-1 py-0.5 rounded">/ruasjalan</code> milik API dosenmu.
-                        </p>
+    <AppLayout>
+        <div class="create-ruas-jalan">
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>Tambah Ruas Jalan</h1>
+                    <p>Tambahkan data ruas jalan baru ke sistem GIS</p>
+                </div>
+                <router-link to="/ruasjalan" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
+                </router-link>
+            </div>
+
+            <div class="form-container">
+                <form @submit.prevent="handleSubmit" class="ruas-jalan-form">
+                    <!-- Lokasi Administratif -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-location-dot"></i>
+                            Lokasi Administratif
+                        </h2>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="provinsi_id">Provinsi</label>
+                                <select
+                                    id="provinsi_id"
+                                    v-model="form.provinsi_id"
+                                    @change="onProvinsiChange"
+                                    :disabled="loading || loadingProvinsi"
+                                    required
+                                >
+                                    <option value="">Pilih Provinsi</option>
+                                    <option
+                                        v-for="provinsi in provinsiList"
+                                        :key="provinsi.id"
+                                        :value="provinsi.id"
+                                    >
+                                        {{ provinsi.provinsi }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kabupaten_id">Kabupaten</label>
+                                <select
+                                    id="kabupaten_id"
+                                    v-model="form.kabupaten_id"
+                                    @change="onKabupatenChange"
+                                    :disabled="loading || loadingKabupaten || !form.provinsi_id"
+                                    required
+                                >
+                                    <option value="">Pilih Kabupaten</option>
+                                    <option
+                                        v-for="kabupaten in kabupatenList"
+                                        :key="kabupaten.id"
+                                        :value="kabupaten.id"
+                                    >
+                                        {{ kabupaten.value }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kecamatan_id">Kecamatan</label>
+                                <select
+                                    id="kecamatan_id"
+                                    v-model="form.kecamatan_id"
+                                    @change="onKecamatanChange"
+                                    :disabled="loading || loadingKecamatan || !form.kabupaten_id"
+                                    required
+                                >
+                                    <option value="">Pilih Kecamatan</option>
+                                    <option
+                                        v-for="kecamatan in kecamatanList"
+                                        :key="kecamatan.id"
+                                        :value="kecamatan.id"
+                                    >
+                                        {{ kecamatan.value }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="desa_id">Desa</label>
+                                <select
+                                    id="desa_id"
+                                    v-model="form.desa_id"
+                                    :disabled="loading || loadingDesa || !form.kecamatan_id"
+                                    required
+                                >
+                                    <option value="">Pilih Desa</option>
+                                    <option
+                                        v-for="desa in desaList"
+                                        :key="desa.id"
+                                        :value="desa.id"
+                                    >
+                                        {{ desa.value }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <router-link
-                        to="/ruasjalan"
-                        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-                    >
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Kembali
-                    </router-link>
-                </div>
 
-                <div v-if="errors.length > 0" class="mb-4 rounded-md bg-red-50 border border-red-200 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle text-red-400"></i>
+                    <!-- Data Ruas Jalan -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-road"></i>
+                            Data Ruas Jalan
+                        </h2>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="kode_ruas">Kode Ruas</label>
+                                <input
+                                    type="text"
+                                    id="kode_ruas"
+                                    v-model="form.kode_ruas"
+                                    placeholder="Masukkan kode ruas"
+                                    :disabled="loading"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nama_ruas">Nama Ruas</label>
+                                <input
+                                    type="text"
+                                    id="nama_ruas"
+                                    v-model="form.nama_ruas"
+                                    placeholder="Masukkan nama ruas"
+                                    :disabled="loading"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="panjang">Panjang (meter)</label>
+                                <input
+                                    type="number"
+                                    id="panjang"
+                                    v-model="form.panjang"
+                                    placeholder="Masukkan panjang"
+                                    :disabled="loading"
+                                    min="1"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lebar">Lebar (meter)</label>
+                                <input
+                                    type="number"
+                                    id="lebar"
+                                    v-model="form.lebar"
+                                    placeholder="Masukkan lebar"
+                                    :disabled="loading"
+                                    min="1"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="eksisting_id">Kondisi Eksisting</label>
+                                <select
+                                    id="eksisting_id"
+                                    v-model="form.eksisting_id"
+                                    :disabled="loading || loadingMaster"
+                                    required
+                                >
+                                    <option value="">Pilih Kondisi Eksisting</option>
+                                    <option
+                                        v-for="eksisting in eksistingList"
+                                        :key="eksisting.id"
+                                        :value="eksisting.id"
+                                    >
+                                        {{ eksisting.eksisting }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kondisi_id">Kondisi Jalan</label>
+                                <select
+                                    id="kondisi_id"
+                                    v-model="form.kondisi_id"
+                                    :disabled="loading || loadingMaster"
+                                    required
+                                >
+                                    <option value="">Pilih Kondisi Jalan</option>
+                                    <option
+                                        v-for="kondisi in kondisiList"
+                                        :key="kondisi.id"
+                                        :value="kondisi.id"
+                                    >
+                                        {{ kondisi.kondisi }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="jenisjalan_id">Jenis Jalan</label>
+                                <select
+                                    id="jenisjalan_id"
+                                    v-model="form.jenisjalan_id"
+                                    :disabled="loading || loadingMaster"
+                                    required
+                                >
+                                    <option value="">Pilih Jenis Jalan</option>
+                                    <option
+                                        v-for="jenis in jenisJalanList"
+                                        :key="jenis.id"
+                                        :value="jenis.id"
+                                    >
+                                        {{ jenis.jenisjalan }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- <div class="form-group">
+                                <label for="currencies_id">Mata Uang</label>
+                                <select
+                                    id="currencies_id"
+                                    v-model="form.currencies_id"
+                                    :disabled="loading || loadingMaster"
+                                    required
+                                >
+                                    <option value="">Pilih Mata Uang</option>
+                                    <option
+                                        v-for="currencies in currenciesList"
+                                        :key="currencies.id"
+                                        :value="currencies.id"
+                                    >
+                                        {{ currencies.jenis_mata_uang }}
+                                    </option>
+                                </select>
+                            </div> -->
+
+
+                            <div class="form-group full-width">
+                                <label for="keterangan">Keterangan</label>
+                                <textarea
+                                    id="keterangan"
+                                    v-model="form.keterangan"
+                                    placeholder="Masukkan keterangan tambahan"
+                                    :disabled="loading"
+                                    rows="3"
+                                ></textarea>
+                            </div>
                         </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">Terjadi kesalahan</h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li v-for="error in errors" :key="error">{{ error }}</li>
-                                </ul>
+                        
+                    </div>
+                    
+                    
+                    <!-- Appearance Ruas Jalan -->
+                    <!-- COMMENTED OUT: Line style feature tidak disimpan 
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-palette"></i>
+                            Tampilan Garis Ruas Jalan
+                        </h2>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Style Garis</label>
+                                <div class="line-style-selector">
+                                    <div 
+                                        v-for="style in availableLineStyles" 
+                                        :key="style.value"
+                                        @click="form.lineStyle = style.value"
+                                        :class="{ active: form.lineStyle === style.value }"
+                                        class="line-style-option"
+                                    >
+                                        <div class="style-preview">{{ style.preview }}</div>
+                                        <span>{{ style.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Warna Garis</label>
+                                <div class="color-selector">
+                                    <div 
+                                        v-for="color in availableColors" 
+                                        :key="color.value"
+                                        @click="form.lineColor = color.value"
+                                        :class="{ active: form.lineColor === color.value }"
+                                        :style="{ backgroundColor: color.value }"
+                                        class="color-option"
+                                    ></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Ketebalan Garis ({{ form.lineWidth }}px)</label>
+                                <div class="width-selector">
+                                    <div 
+                                        v-for="width in availableWidths" 
+                                        :key="width"
+                                        @click="form.lineWidth = width"
+                                        :class="{ active: form.lineWidth === width }"
+                                        class="width-option"
+                                    >
+                                        <div 
+                                            class="width-preview" 
+                                            :style="{ 
+                                                height: width + 'px',
+                                                backgroundColor: form.lineColor 
+                                            }"
+                                        ></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                    -->
+                    
 
-                <div class="overflow-hidden rounded-xl bg-white shadow border border-gray-100">
-                    <form @submit.prevent="handleSubmit" class="px-6 py-6 space-y-6">
-                        <!-- Lokasi Administratif -->
-                        <div>
-                            <h2 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                                <i class="fas fa-location-dot text-primary-500 mr-2"></i>
-                                Lokasi Administratif
-                            </h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="provinsi_id" class="block text-xs font-medium text-gray-700 mb-1">Provinsi</label>
-                                    <select
-                                        id="provinsi_id"
-                                        v-model="form.provinsi_id"
-                                        @change="onProvinsiChange"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                    >
-                                        <option value="">Pilih Provinsi</option>
-                                        <option v-for="prov in regions" :key="prov.id" :value="prov.id">
-                                            {{ prov.provinsi || `Provinsi #${prov.id}` }}
-                                        </option>
-                                    </select>
+                    <!-- Peta -->
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-map"></i>
+                            Lokasi di Peta
+                        </h2>
+                        
+                        <div class="map-container">
+                            <div id="map" class="map"></div>
+                            <div class="map-instructions">
+                                <div class="instruction-item">
+                                    <i class="fas fa-pencil-alt"></i>
+                                    <span>Klik ikon <strong>Draw a polyline</strong> (garis) di pojok kiri atas peta</span>
                                 </div>
-                                <div>
-                                    <label for="kabupaten_id" class="block text-xs font-medium text-gray-700 mb-1">Kabupaten</label>
-                                    <select
-                                        id="kabupaten_id"
-                                        v-model="form.kabupaten_id"
-                                        @change="loadKecamatan"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                    >
-                                        <option value="">Pilih kabupaten</option>
-                                        <option v-for="kab in kabupatenList" :key="kab.id" :value="kab.id">
-                                            {{ kab.value || kab.kabupaten }}
-                                        </option>
-                                    </select>
+                                <div class="instruction-item">
+                                    <i class="fas fa-mouse-pointer"></i>
+                                    <span>Klik pada peta untuk menambah titik-titik ruas jalan</span>
                                 </div>
-                                <div>
-                                    <label for="kecamatan_id" class="block text-xs font-medium text-gray-700 mb-1">Kecamatan</label>
-                                    <select
-                                        id="kecamatan_id"
-                                        v-model="form.kecamatan_id"
-                                        @change="loadDesa"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                    >
-                                        <option value="">Pilih kecamatan</option>
-                                        <option v-for="kec in kecamatanList" :key="kec.id" :value="kec.id">
-                                            {{ kec.value || kec.kecamatan }}
-                                        </option>
-                                    </select>
+                                <div class="instruction-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>Klik dua kali atau klik titik terakhir untuk selesai</span>
                                 </div>
-                                <div>
-                                    <label for="desa_id" class="block text-xs font-medium text-gray-700 mb-1">Desa</label>
-                                    <select
-                                        id="desa_id"
-                                        v-model="form.desa_id"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    >
-                                        <option value="">Pilih desa</option>
-                                        <option v-for="desa in desaList" :key="desa.id" :value="desa.id">
-                                            {{ desa.value || desa.desa }}
-                                        </option>
-                                    </select>
+                                <div v-if="form.paths" class="path-info">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                    <span>Path: <code>{{ form.paths.substring(0, 30) }}...</code></span>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Data Ruas Jalan -->
-                        <div>
-                            <h2 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                                <i class="fas fa-road text-gray-600 mr-2"></i>
-                                Data Ruas Jalan
-                            </h2>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="kode_ruas" class="block text-xs font-medium text-gray-700 mb-1">Kode Ruas</label>
-                                    <input
-                                        id="kode_ruas"
-                                        v-model="form.kode_ruas"
-                                        type="text"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label for="nama_ruas" class="block text-xs font-medium text-gray-700 mb-1">Nama Ruas</label>
-                                    <input
-                                        id="nama_ruas"
-                                        v-model="form.nama_ruas"
-                                        type="text"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label for="panjang" class="block text-xs font-medium text-gray-700 mb-1">Panjang (meter)</label>
-                                    <input
-                                        id="panjang"
-                                        v-model.number="form.panjang"
-                                        type="number"
-                                        step="0.01"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label for="lebar" class="block text-xs font-medium text-gray-700 mb-1">Lebar (meter)</label>
-                                    <input
-                                        id="lebar"
-                                        v-model.number="form.lebar"
-                                        type="number"
-                                        step="0.01"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Klasifikasi -->
-                        <div>
-                            <h2 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                                <i class="fas fa-list-ol text-emerald-600 mr-2"></i>
-                                Klasifikasi Jalan (Isi ID dari API)
-                            </h2>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label for="eksisting_id" class="block text-xs font-medium text-gray-700 mb-1">Eksisting ID</label>
-                                    <input
-                                        id="eksisting_id"
-                                        v-model.number="form.eksisting_id"
-                                        type="number"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label for="jenisjalan_id" class="block text-xs font-medium text-gray-700 mb-1">Jenis Jalan ID</label>
-                                    <input
-                                        id="jenisjalan_id"
-                                        v-model.number="form.jenisjalan_id"
-                                        type="number"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label for="kondisi_id" class="block text-xs font-medium text-gray-700 mb-1">Kondisi Jalan ID</label>
-                                    <input
-                                        id="kondisi_id"
-                                        v-model.number="form.kondisi_id"
-                                        type="number"
-                                        class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Geometry -->
-                        <div>
-                            <h2 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-draw-polygon text-purple-600 mr-2"></i>
-                                Geometry (Encoded Polyline)
-                            </h2>
-                            <textarea
-                                id="paths"
-                                v-model="form.paths"
-                                rows="3"
-                                class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                placeholder="Contoh: l`is@asr~T@UHiAZyCD_D atau hasil encode polyline dari map"
-                                required
-                            ></textarea>
-                        </div>
-
-                        <!-- Keterangan -->
-                        <div>
-                            <label for="keterangan" class="block text-xs font-medium text-gray-700 mb-1">Keterangan (opsional)</label>
-                            <textarea
-                                id="keterangan"
-                                v-model="form.keterangan"
-                                rows="2"
-                                class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                placeholder="Contoh: Jalan menuju objek wisata, jalan desa, dll."
-                            ></textarea>
-                        </div>
-
-                        <div class="pt-4 flex justify-end">
-                            <button
-                                type="submit"
-                                :disabled="loading"
-                                class="inline-flex items-center rounded-md bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
-                            >
-                                <i class="fas fa-save mr-2"></i>
-                                {{ loading ? 'Menyimpan...' : 'Simpan Ruas Jalan' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn" :disabled="loading || !canSubmit">
+                            <span v-if="loading" class="loading-spinner"></span>
+                            <i v-else class="fas fa-save"></i>
+                            {{ loading ? 'Menyimpan...' : 'Simpan Ruas Jalan' }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </Layout>
+    </AppLayout>
 </template>
 
 <script>
-import Layout from '../../components/Layout.vue';
-import axios from 'axios';
+import AppLayout from '../../components/AppLayout.vue';
 import RegionService from '../../services/RegionService.js';
+import RuasJalanService from '../../services/RuasJalanService.js';
+import toast from '../../utils/toast.js';
+import CurrencyService from '../../services/CurrencyService.js';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
+import polyline from '@mapbox/polyline';
 
 export default {
-    name: 'RuasJalanCreate',
+    name: 'CreateRuasJalan',
     components: {
-        Layout,
+        AppLayout
     },
     data() {
         return {
@@ -261,111 +390,1063 @@ export default {
                 panjang: '',
                 lebar: '',
                 eksisting_id: '',
-                jenisjalan_id: '',
                 kondisi_id: '',
-                paths: '',
-                keterangan: '',
+                jenisjalan_id: '',
+                keterangan: '-', // Default value to prevent null error
+                currencies_id: '',
+                paths: ''
+                // COMMENTED OUT: Line style properties tidak disimpan 
+                // lineStyle: 'solid',
+                // lineColor: '#3b82f6',
+                // lineWidth: 4
             },
-            regions: [],
+            
+            // Data lists
+            provinsiList: [],
             kabupatenList: [],
             kecamatanList: [],
             desaList: [],
+            eksistingList: [],
+            kondisiList: [],
+            jenisJalanList: [],
+            currenciesList: [],
+            
+            // COMMENTED OUT: Line style options tidak disimpan 
+            /*
+            availableLineStyles: [
+                { 
+                    value: 'solid', 
+                    name: 'Solid', 
+                    dashArray: null,
+                    preview: '━━━━━━━'
+                },
+                { 
+                    value: 'dashed', 
+                    name: 'Dashed', 
+                    dashArray: '10, 10',
+                    preview: '━ ━ ━ ━'
+                },
+                { 
+                    value: 'dotted', 
+                    name: 'Dotted', 
+                    dashArray: '2, 8',
+                    preview: '• • • • •'
+                },
+                { 
+                    value: 'dashdot', 
+                    name: 'Dash-Dot', 
+                    dashArray: '10, 5, 2, 5',
+                    preview: '━ • ━ •'
+                },
+                { 
+                    value: 'longdash', 
+                    name: 'Long Dash', 
+                    dashArray: '20, 10',
+                    preview: '━━ ━━ ━━'
+                }
+            ],
+            
+            availableColors: [
+                { value: '#3b82f6', name: 'Blue' },
+                { value: '#ef4444', name: 'Red' },
+                { value: '#10b981', name: 'Green' },
+                { value: '#f59e0b', name: 'Yellow' },
+                { value: '#8b5cf6', name: 'Purple' },
+                { value: '#06b6d4', name: 'Cyan' },
+                { value: '#ec4899', name: 'Pink' },
+                { value: '#f97316', name: 'Orange' }
+            ],
+            
+            availableWidths: [2, 3, 4, 5, 6, 8],
+            */
+            
+            // Loading states
             loading: false,
-            errors: [],
-        };
+            loadingProvinsi: false,
+            loadingKabupaten: false,
+            loadingKecamatan: false,
+            loadingDesa: false,
+            loadingMaster: false,
+            
+            // Map
+            map: null,
+            drawnItems: null,
+            currentPath: null,
+            
+            // Coordinate cache untuk menghindari repeated requests
+            coordinateCache: {}
+        }
+    },
+    computed: {
+        canSubmit() {
+            return this.form.desa_id && 
+                   this.form.kode_ruas && 
+                   this.form.nama_ruas && 
+                   this.form.panjang && 
+                   this.form.lebar && 
+                   this.form.eksisting_id && 
+                   this.form.kondisi_id && 
+                   this.form.jenisjalan_id &&
+                   this.form.paths;
+        }
     },
     async mounted() {
-        await this.loadRegions();
+        await this.loadInitialData();
+        await this.loadCurrencies();
+        this.initMap();
+    },
+    watch: {
+        'form.desa_id': function(newVal) {
+            if (newVal && this.desaList.length > 0) {
+                const selectedDesa = this.desaList.find(d => d.id === newVal);
+                if (selectedDesa) {
+                    this.zoomToDesa(selectedDesa.value);
+                }
+            }
+        }
+        // COMMENTED OUT: Line style watch tidak diperlukan
+        // 'form.lineStyle'() {
+        //     this.updatePolylineStyle();
+        // },
+        // 'form.lineColor'() {
+        //     this.updatePolylineStyle();
+        // },
+        // 'form.lineWidth'() {
+        //     this.updatePolylineStyle();
+        // }
     },
     methods: {
-        async loadRegions() {
-            try {
-                const result = await RegionService.getAllRegions();
-                if (result.success) {
-                    this.regions = result.data.provinsi || [];
-                    console.log('Loaded provinsi:', this.regions);
-                } else {
-                    console.error('Failed to load regions:', result.message);
-                }
-            } catch (error) {
-                console.error('Error loading regions:', error);
+        zoomToProvince(provinceName) {
+            // Predefined coordinates for Indonesian provinces
+            const provinceCoords = {
+                'Aceh': [-5.135, 96.7246],
+                'Sumatera Utara': [3.0973, 101.6228],
+                'Sumatera Barat': [-0.3031, 100.6674],
+                'Riau': [0.3031, 101.4374],
+                'Jambi': [-1.4852, 103.6122],
+                'Sumatera Selatan': [-3.6191, 104.7453],
+                'Lampung': [-4.5586, 105.4067],
+                'Kepulauan Bangka Belitung': [-2.7421, 107.5892],
+                'Jawa Barat': [-6.9271, 107.5705],
+                'Jawa Tengah': [-7.1506, 110.1429],
+                'Jawa Timur': [-7.2575, 112.7521],
+                'DKI Jakarta': [-6.2088, 106.8456],
+                'DI Yogyakarta': [-7.7956, 110.3695],
+                'Banten': [-6.2383, 106.1537],
+                'Bali': [-8.4095, 115.1889],
+                'Nusa Tenggara Barat': [-8.6500, 117.3616],
+                'Nusa Tenggara Timur': [-8.6573, 120.8758],
+                'Kalimantan Barat': [0.2127, 111.9673],
+                'Kalimantan Tengah': [-1.6815, 113.7618],
+                'Kalimantan Selatan': [-3.3200, 114.5900],
+                'Kalimantan Timur': [0.5306, 116.7283],
+                'Sulawesi Utara': [1.4527, 124.8581],
+                'Sulawesi Tengah': [-1.4286, 119.8596],
+                'Sulawesi Selatan': [-5.1477, 119.4327],
+                'Sulawesi Tenggara': [-4.0511, 122.5808],
+                'Gorontalo': [0.7167, 122.4333],
+                'Sulawesi Barat': [-2.1338, 119.2471],
+                'Maluku': [-3.2, 129.5],
+                'Maluku Utara': [0.8028, 127.5363],
+                'Papua': [-3.1913, 133.8687],
+                'Papua Barat': [-1.3554, 132.7562]
+            };
+            
+            const coords = provinceCoords[provinceName];
+            if (coords && this.map) {
+                this.map.setView(coords, 10);
             }
         },
-        onProvinsiChange() {
-            console.log('🔥 onProvinsiChange called!');
-            console.log('form.provinsi_id:', this.form.provinsi_id);
-            console.log('type:', typeof this.form.provinsi_id);
-            this.loadKabupaten();
+
+        zoomToKabupaten(kabupatenName) {
+            // Kabupaten coordinates within Bali (since default is Bali)
+            const kabupatenCoords = {
+                'Badung': [-8.65, 115.21],
+                'Bangli': [-8.25, 115.37],
+                'Buleleng': [-8.12, 115.04],
+                'Denpasar': [-8.65, 115.21],
+                'Gianyar': [-8.50, 115.36],
+                'Jembrana': [-8.33, 114.36],
+                'Karangasem': [-8.40, 115.48],
+                'Klungkung': [-8.48, 115.36],
+                'Tabanan': [-8.52, 115.13],
+                'Ubud': [-8.51, 115.26]
+            };
+            
+            const coords = kabupatenCoords[kabupatenName];
+            if (coords && this.map) {
+                this.map.setView(coords, 12);
+            } else if (this.map) {
+                // Fallback to Bali zoom if not found
+                this.map.setView([-8.4095, 115.1889], 10);
+            }
         },
-        async loadKabupaten() {
-            if (!this.form.provinsi_id) return;
-            this.kabupatenList = [];
-            this.kecamatanList = [];
-            this.desaList = [];
+
+        zoomToKecamatan(kecamatanName) {
+            // Try to geocode kecamatan name
+            if (this.map) {
+                this.geocodeAndZoom(kecamatanName, 14, `Kecamatan ${kecamatanName}`);
+            }
+        },
+
+        zoomToDesa(desaName) {
+            // Try to geocode desa name
+            if (this.map) {
+                this.geocodeAndZoom(desaName, 15, `Siap untuk menandai ruas jalan di ${desaName}. Gunakan ikon "Draw a polyline" di pojok kiri.`);
+            }
+        },
+
+        async geocodeAndZoom(locationName, zoomLevel, message) {
+            try {
+                // Check cache first
+                const cacheKey = locationName.toLowerCase();
+                if (this.coordinateCache[cacheKey]) {
+                    const coords = this.coordinateCache[cacheKey];
+                    this.map.setView(coords, zoomLevel);
+                    toast.info(message, 'Info');
+                    return;
+                }
+
+                // Use Nominatim (OpenStreetMap free geocoding)
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationName + ', Bali, Indonesia')}&format=json&limit=1`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                    // Cache the result
+                    this.coordinateCache[cacheKey] = coords;
+                    this.map.setView(coords, zoomLevel);
+                    toast.info(message, 'Info');
+                } else {
+                    // Fallback to just zoom in
+                    this.map.setZoom(zoomLevel);
+                    toast.info(`${message} (Lokasi pasti tidak ditemukan, silakan manual di peta)`, 'Info');
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                // Fallback to just zoom in
+                if (this.map) {
+                    this.map.setZoom(zoomLevel);
+                    toast.info(message, 'Info');
+                }
+            }
+        },
+        async loadCurrencies(){
+            try {
+                const currenciesResult = await CurrencyService.getAllCurrencies();
+                console.log('Currencies result:', currenciesResult);
+                
+                if (currenciesResult.success) { 
+                    this.currenciesList = currenciesResult.data;
+                }
+            } catch (error) {
+                console.error('Error loading currencies:', error);
+                toast.error('Gagal memuat data mata uang.', 'Error');
+            }
+        },
+        async loadInitialData() {
+            this.loadingProvinsi = true;
+            this.loadingMaster = true;
+            
+            try {
+                // Load regions
+                const regionsResult = await RegionService.getAllRegions();
+                if (regionsResult.success) {
+                    this.provinsiList = regionsResult.data.provinsi;
+                }
+                
+                // Load master data (eksisting, kondisi, jenisjalan)
+                const results = await Promise.allSettled([
+                    RuasJalanService.getMasterEksisting(),
+                    RuasJalanService.getMasterKondisi(),
+                    RuasJalanService.getMasterJenisJalan()
+                ]);
+                
+                const [eksistingResult, kondisiResult, jenisResult] = results.map(r => 
+                    r.status === 'fulfilled' ? r.value : { success: false }
+                );
+                
+                if (eksistingResult.success) {
+                    this.eksistingList = eksistingResult.data;
+                }
+                
+                if (kondisiResult.success) {
+                    this.kondisiList = kondisiResult.data;
+                }
+                
+                if (jenisResult.success) {
+                    this.jenisJalanList = jenisResult.data;
+                }
+                
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+                toast.error('Gagal memuat data awal.', 'Error');
+            } finally {
+                this.loadingProvinsi = false;
+                this.loadingMaster = false;
+            }
+        },
+
+        async onProvinsiChange() {
+            if (!this.form.provinsi_id) {
+                this.kabupatenList = [];
+                this.kecamatanList = [];
+                this.desaList = [];
+                this.form.kabupaten_id = '';
+                this.form.kecamatan_id = '';
+                this.form.desa_id = '';
+                // Reset map to Bali
+                if (this.map) {
+                    this.map.setView([-8.4095, 115.1889], 10);
+                }
+                return;
+            }
+
+            this.loadingKabupaten = true;
             try {
                 const result = await RegionService.getKabupatenByProvinsiId(this.form.provinsi_id);
-                console.log('loadKabupaten result:', result);
-                console.log('result.success:', result.success);
-                console.log('result.data:', result.data);
                 if (result.success) {
-                    this.kabupatenList = result.data || [];
-                    console.log('Loaded kabupaten:', this.kabupatenList);
-                } else {
-                    console.error('Failed to load kabupaten:', result.message);
+                    this.kabupatenList = result.data;
+                    this.kecamatanList = [];
+                    this.desaList = [];
+                    this.form.kabupaten_id = '';
+                    this.form.kecamatan_id = '';
+                    this.form.desa_id = '';
+                    
+                    // Get selected province name and zoom to it
+                    const selectedProvinsi = this.provinsiList.find(p => p.id === this.form.provinsi_id);
+                    if (selectedProvinsi) {
+                        this.zoomToProvince(selectedProvinsi.provinsi);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading kabupaten:', error);
+                toast.error('Gagal memuat data kabupaten.', 'Error');
+            } finally {
+                this.loadingKabupaten = false;
             }
         },
-        async loadKecamatan() {
-            if (!this.form.kabupaten_id) return;
-            this.kecamatanList = [];
-            this.desaList = [];
+
+        async onKabupatenChange() {
+            if (!this.form.kabupaten_id) {
+                this.kecamatanList = [];
+                this.desaList = [];
+                this.form.kecamatan_id = '';
+                this.form.desa_id = '';
+                // Reset to province view
+                const selectedProvinsi = this.provinsiList.find(p => p.id === this.form.provinsi_id);
+                if (selectedProvinsi && this.map) {
+                    this.zoomToProvince(selectedProvinsi.provinsi);
+                }
+                return;
+            }
+
+            this.loadingKecamatan = true;
             try {
                 const result = await RegionService.getKecamatanByKabupatenId(this.form.kabupaten_id);
                 if (result.success) {
-                    this.kecamatanList = result.data || [];
-                    console.log('Loaded kecamatan:', this.kecamatanList);
-                } else {
-                    console.error('Failed to load kecamatan:', result.message);
+                    this.kecamatanList = result.data;
+                    this.desaList = [];
+                    this.form.kecamatan_id = '';
+                    this.form.desa_id = '';
+                    
+                    // Get selected kabupaten name and zoom to it
+                    const selectedKabupaten = this.kabupatenList.find(k => k.id === this.form.kabupaten_id);
+                    if (selectedKabupaten) {
+                        this.zoomToKabupaten(selectedKabupaten.value);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading kecamatan:', error);
+                toast.error('Gagal memuat data kecamatan.', 'Error');
+            } finally {
+                this.loadingKecamatan = false;
             }
         },
-        async loadDesa() {
-            if (!this.form.kecamatan_id) return;
-            this.desaList = [];
+
+        async onKecamatanChange() {
+            if (!this.form.kecamatan_id) {
+                this.desaList = [];
+                this.form.desa_id = '';
+                // Reset to kabupaten view
+                const selectedKabupaten = this.kabupatenList.find(k => k.id === this.form.kabupaten_id);
+                if (selectedKabupaten && this.map) {
+                    this.zoomToKabupaten(selectedKabupaten.value);
+                }
+                return;
+            }
+
+            this.loadingDesa = true;
             try {
                 const result = await RegionService.getDesaByKecamatanId(this.form.kecamatan_id);
                 if (result.success) {
-                    this.desaList = result.data || [];
-                    console.log('Loaded desa:', this.desaList);
-                } else {
-                    console.error('Failed to load desa:', result.message);
+                    this.desaList = result.data;
+                    this.form.desa_id = '';
+                    
+                    // Get selected kecamatan name and zoom to it
+                    const selectedKecamatan = this.kecamatanList.find(k => k.id === this.form.kecamatan_id);
+                    if (selectedKecamatan) {
+                        this.zoomToKecamatan(selectedKecamatan.value);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading desa:', error);
+                toast.error('Gagal memuat data desa.', 'Error');
+            } finally {
+                this.loadingDesa = false;
             }
         },
-        async handleSubmit() {
-            this.loading = true;
-            this.errors = [];
-            try {
-                await axios.post('/ruasjalan', this.form);
-                this.$router.push({ path: '/ruasjalan', query: { success: 'Ruas jalan berhasil ditambahkan!' } });
-            } catch (error) {
-                if (error.response?.data?.errors) {
-                    const errorData = error.response.data.errors;
-                    this.errors = Object.values(errorData).flat();
-                } else {
-                    this.errors = [error.response?.data?.message || 'Gagal menambah ruas jalan'];
+
+        initMap() {
+            // Initialize map centered on Bali
+            this.map = L.map('map').setView([-8.4095, 115.1889], 10);
+
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(this.map);
+
+            // Initialize drawn items layer
+            this.drawnItems = new L.FeatureGroup();
+            this.map.addLayer(this.drawnItems);
+
+            
+
+            // Add drawing controls
+            const drawControl = new L.Control.Draw({
+                edit: {
+                    featureGroup: this.drawnItems
+                },
+                draw: {
+                    polygon: false,
+                    circle: false,
+                    rectangle: false,
+                    marker: false,
+                    circlemarker: false,
+                    polyline: {
+                        shapeOptions: {
+                            color: '#3b82f6', // Default blue
+                            weight: 4 // Default width
+                            // COMMENTED OUT: Line style tidak disimpan 
+                            // color: this.form.lineColor,
+                            // weight: this.form.lineWidth,
+                            // dashArray: this.getSelectedDashArray()
+                        }
+                    }
                 }
+            });
+            this.map.addControl(drawControl);
+
+            // Handle drawing events
+            this.map.on('draw:created', (e) => {
+                const layer = e.layer;
+                
+                // Clear previous drawings
+                this.drawnItems.clearLayers();
+                
+                // COMMENTED OUT: Line style tidak disimpan 
+                // Apply custom style before adding layer
+                // layer.setStyle({
+                //     color: this.form.lineColor,
+                //     weight: this.form.lineWidth,
+                //     dashArray: this.getSelectedDashArray()
+                // });
+
+                // Add new drawing
+                this.drawnItems.addLayer(layer);
+                
+                // Get coordinates and encode as polyline
+                const coordinates = layer.getLatLngs();
+                this.form.paths = this.encodePolyline(coordinates);
+                this.currentPath = coordinates;
+                
+                // Calculate and set panjang (length in meters)
+                const lengthInMeters = this.calculatePathLength(coordinates);
+                this.form.panjang = Math.round(lengthInMeters);
+                
+                toast.success(`Ruas jalan berhasil ditandai! Panjang: ${Math.round(lengthInMeters)}m`, 'Sukses');
+            });
+
+            this.map.on('draw:edited', (e) => {
+                const layers = e.layers;
+                layers.eachLayer((layer) => {
+                    const coordinates = layer.getLatLngs();
+                    this.form.paths = this.encodePolyline(coordinates);
+                    this.currentPath = coordinates;
+                    
+                    // Recalculate panjang
+                    const lengthInMeters = this.calculatePathLength(coordinates);
+                    this.form.panjang = Math.round(lengthInMeters);
+                });
+                
+                toast.success('Lokasi ruas jalan berhasil diperbarui!', 'Sukses');
+            });
+
+            this.map.on('draw:deleted', () => {
+                this.form.paths = '';
+                this.currentPath = null;
+                this.form.panjang = '';
+                toast.info('Lokasi ruas jalan dihapus.', 'Info');
+            });
+        },
+
+            // COMMENTED OUT: Line style methods tidak diperlukan
+        // getSelectedDashArray() {
+        //     const selectedStyle = this.availableLineStyles.find(
+        //         s => s.value === this.form.lineStyle
+        //     );
+        //     return selectedStyle ? selectedStyle.dashArray : null;
+        // },
+        
+        // updatePolylineStyle() {
+        //     // Update style untuk polyline yang sudah digambar
+        //     if (this.currentPath && this.drawnItems.getLayers().length > 0) {
+        //         const layer = this.drawnItems.getLayers()[0];
+        //         
+        //         layer.setStyle({
+        //             color: this.form.lineColor,
+        //             weight: this.form.lineWidth,
+        //             dashArray: this.getSelectedDashArray()
+        //         });
+        //     }
+        // },
+
+        calculatePathLength(coordinates) {
+            let totalDistance = 0;
+            
+            for (let i = 0; i < coordinates.length - 1; i++) {
+                const point1 = coordinates[i];
+                const point2 = coordinates[i + 1];
+                
+                // Calculate distance between two points using Leaflet's built-in method
+                const distance = this.map.distance(point1, point2);
+                totalDistance += distance;
+            }
+            
+            return totalDistance;
+        },
+
+        encodePolyline(coordinates) {
+            // Convert Leaflet LatLng objects to [lat, lng] array format
+            const points = coordinates.map(coord => [coord.lat, coord.lng]);
+            
+            // Encode using Google's polyline algorithm (precision 5)
+            const encoded = polyline.encode(points);
+            
+            console.log('Coordinates:', points);
+            console.log('Encoded polyline:', encoded);
+            
+            return encoded;
+        },
+
+        async handleSubmit() {
+            if (!this.validateForm()) {
+                return;
+            }
+
+            this.loading = true;
+            
+            try {
+                // Check if remote token exists
+                const remoteToken = localStorage.getItem('remote_auth_token');
+                if (!remoteToken) {
+                    toast.error('Token autentikasi tidak ditemukan. Silakan login kembali.', 'Error');
+                    this.loading = false;
+                    return;
+                }
+                
+                console.log('Submitting ruas jalan data:', this.form);
+                
+                // COMMENTED OUT: Line style tidak disimpan 
+                // Include line style properties
+                // const dataToSubmit = {
+                //     ...this.form,
+                //     lineStyle: this.form.lineStyle,
+                //     lineColor: this.form.lineColor,
+                //     lineWidth: this.form.lineWidth
+                // };
+                
+                const result = await RuasJalanService.createRuasJalan(this.form);
+                
+                if (result.success) {
+                    toast.success('Ruas jalan berhasil ditambahkan!', 'Sukses');
+                    setTimeout(() => {
+                        this.$router.push('/ruasjalan');
+                    }, 1500);
+                } else {
+                    const errorMsg = result.message || 'Gagal menyimpan data ruas jalan';
+                    toast.error(errorMsg, 'Error');
+                    console.error('Create ruas jalan failed:', result);
+                }
+            } catch (error) {
+                console.error('Error creating ruas jalan:', error);
+                const errorMsg = error.response?.data?.message || error.message || 'Terjadi kesalahan saat menyimpan data.';
+                toast.error(errorMsg, 'Error');
             } finally {
                 this.loading = false;
             }
         },
-    },
-};
+
+        validateForm() {
+            if (!this.form.desa_id) {
+                toast.warning('Silakan pilih desa.', 'Validasi');
+                return false;
+            }
+
+            if (!this.form.kode_ruas.trim()) {
+                toast.warning('Silakan masukkan kode ruas.', 'Validasi');
+                return false;
+            }
+
+            if (!this.form.nama_ruas.trim()) {
+                toast.warning('Silakan masukkan nama ruas.', 'Validasi');
+                return false;
+            }
+
+            if (!this.form.paths) {
+                toast.warning('Silakan tandai lokasi ruas jalan di peta.', 'Validasi');
+                return false;
+            }
+
+            return true;
+        }
+    }
+}
 </script>
 
+<style scoped>
+.create-ruas-jalan {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.header-content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.5rem;
+}
+
+.header-content p {
+    color: #6b7280;
+    margin: 0;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.form-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.ruas-jalan-form {
+    padding: 2rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.section-title i {
+    color: #3b82f6;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+    background: #f9fafb;
+    cursor: not-allowed;
+}
+
+.map-container {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.map {
+    height: 400px;
+    width: 100%;
+}
+
+.map-instructions {
+    padding: 1rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+.map-instructions p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.map-instructions i {
+    color: #3b82f6;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.instruction-item:last-child {
+    margin-bottom: 0;
+}
+
+.instruction-item i {
+    color: #3b82f6;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+}
+
+.instruction-item strong {
+    color: #1f2937;
+}
+
+.path-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.path-info i {
+    color: #3b82f6;
+}
+
+.path-info code {
+    background: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    color: #1e40af;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 2rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Leaflet Draw Control Styling */
+.leaflet-draw-toolbar {
+    margin-top: 10px !important;
+}
+
+.leaflet-draw-toolbar a {
+    background-color: white !important;
+    border: 2px solid rgba(0,0,0,0.2) !important;
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 32px !important;
+}
+
+.leaflet-draw-toolbar a:hover {
+    background-color: #f4f4f4 !important;
+    border-color: #3b82f6 !important;
+}
+
+.leaflet-draw-draw-polyline {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNCAyMGg0TDIwIDhsLTQtNEw0IDIweiIvPjxwYXRoIGQ9Ik0xMy41IDcuNWwyLjUgMi41Ii8+PC9zdmc+') !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 20px 20px !important;
+}
+
+.leaflet-draw-edit-edit {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YjU1NjMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTcgM2E0IDQgMCAwIDEgNCA0djJhNCA0IDAgMCAxLTQgNEg3YTQgNCAwIDAgMS00LTRWN2E0IDQgMCAwIDEgNC00eiIvPjxwYXRoIGQ9Ik0xMiA4djgiLz48cGF0aCBkPSJNOCAxMmg4Ii8+PC9zdmc+') !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 18px 18px !important;
+}
+
+.leaflet-draw-edit-remove {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNlZjQ0NDQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWxpbmUgcG9pbnRzPSIzIDYgNSA2IDIxIDYiLz48cGF0aCBkPSJNMTkgNnYxNGEyIDIgMCAwIDEtMiAySDdhMiAyIDAgMCAxLTItMlY2bTE0IDBWNGEyIDIgMCAwIDAtMi0ySDlhMiAyIDAgMCAwLTIgMnYyIi8+PC9zdmc+') !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 18px 18px !important;
+}
+
+.leaflet-draw-actions {
+    left: 34px !important;
+}
+
+.leaflet-draw-actions a {
+    background-color: white !important;
+    color: #333 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 0 10px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+}
+
+/* COMMENTED OUT: Line Style Selector CSS tidak diperlukan
+.line-style-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.75rem;
+}
+
+.line-style-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.line-style-option:hover,
+.line-style-option.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.style-preview {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    letter-spacing: 2px;
+}
+
+.line-style-option.active .style-preview {
+    color: #3b82f6;
+}
+
+.line-style-option span {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.line-style-option.active span {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.color-selector {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.color-option.active {
+    border-color: #1f2937;
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.width-selector {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.width-option {
+    flex: 1;
+    padding: 1rem 0.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+}
+
+.width-option:hover,
+.width-option.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.width-preview {
+    width: 100%;
+    max-width: 40px;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+*/
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ruas-jalan-form {
+        padding: 1.5rem;
+    }
+    
+    /* COMMENTED OUT: Line style responsive CSS
+    .line-style-selector {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .width-selector {
+        flex-wrap: wrap;
+    }
+    */
+}
+</style>

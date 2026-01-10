@@ -69,50 +69,33 @@
                             </div>
 
                             <div class="group">
-                                <label for="password" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                                    <i class="fas fa-lock text-primary-600 mr-2"></i>
-                                    Kata Sandi
+                                <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Password
                                 </label>
                                 <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
                                     <input
                                         id="password"
                                         v-model="form.password"
                                         :type="showPassword ? 'text' : 'password'"
                                         autocomplete="current-password"
                                         required
-                                        placeholder="Masukkan kata sandi"
-                                        class="block w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-4 text-gray-900 placeholder-gray-500 shadow-sm focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 transition-all duration-300 text-sm"
+                                        placeholder="Masukkan password Anda"
+                                        class="block w-full rounded-xl border-2 border-gray-200 bg-gray-50 pl-12 pr-12 py-4 text-gray-900 placeholder-gray-500 shadow-sm focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 transition-all duration-300 text-sm"
                                     />
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-                                        <button
-                                            type="button"
-                                            @click="showPassword = !showPassword"
-                                            class="text-gray-400 hover:text-gray-600 transition-colors"
-                                        >
-                                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="showPassword = !showPassword"
+                                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-primary-600 focus:outline-none transition-colors duration-200 cursor-pointer z-20"
+                                    >
+                                        <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <input
-                                        id="remember-me"
-                                        v-model="form.remember"
-                                        type="checkbox"
-                                        class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                    />
-                                    <label for="remember-me" class="ml-3 block text-sm text-gray-700">
-                                        Ingat saya
-                                    </label>
-                                </div>
-                                <div class="text-sm">
-                                    <a href="#" class="font-medium text-primary-600 hover:text-primary-500 transition-colors">
-                                        Lupa kata sandi?
-                                    </a>
-                                </div>
-                            </div>
+                            
 
                             <div class="pt-4">
                                 <button
@@ -135,7 +118,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import AuthService from '../../services/AuthService.js';
+import toast from '../../utils/toast.js';
 
 export default {
     name: 'Login',
@@ -151,29 +135,83 @@ export default {
             errors: [],
         };
     },
+    mounted() {
+        // Redirect jika sudah login
+        if (AuthService.isAuthenticated()) {
+            this.$router.push('/dashboard');
+        }
+    },
     methods: {
         async handleSubmit() {
+            // Validasi form
+            if (!this.validateForm()) {
+                return;
+            }
+
             this.loading = true;
             this.errors = [];
 
             try {
-                const response = await axios.post('/login', this.form);
-                if (response.data.redirect) {
-                    window.location.href = response.data.redirect;
+                console.log('Starting dual login...');
+                console.log('Form data:', { email: this.form.email, password: '***' });
+                
+                // Gunakan loginDual untuk login ke lokal dan remote sekaligus
+                const result = await AuthService.loginDual(this.form);
+                
+                console.log('Login result:', result);
+                
+                if (result.success) {
+                    // Tampilkan notifikasi sukses
+                    const message = result.remoteSuccess 
+                        ? 'Login berhasil ke sistem lokal dan API!' 
+                        : 'Login berhasil ke sistem lokal!';
+                    toast.success('Login Berhasil!', message);
+                    
+                    // Debug: Log token status
+                    AuthService.logTokenStatus();
+                    
+                    // Redirect setelah delay singkat
+                    setTimeout(() => {
+                        const redirectTo = this.$route.query.redirect || '/dashboard';
+                        this.$router.push(redirectTo).catch(() => {
+                            window.location.href = redirectTo;
+                        });
+                    }, 1000);
                 } else {
-                    this.$router.push('/dashboard');
+                    // Tampilkan notifikasi error dengan detail
+                    console.error('Login failed:', result.message);
+                    toast.error('Login Gagal', result.message || 'Email atau password salah');
+                    this.errors = [result.message || 'Email atau password salah'];
                 }
             } catch (error) {
-                if (error.response?.data?.errors) {
-                    const errorData = error.response.data.errors;
-                    this.errors = Object.values(errorData).flat();
-                } else {
-                    this.errors = [error.response?.data?.message || 'Terjadi kesalahan saat login'];
-                }
+                console.error('Login exception:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    response: error.response?.data,
+                    status: error.response?.status
+                });
+                
+                const errorMsg = error.response?.data?.message || 
+                               error.message || 
+                               'Terjadi kesalahan saat login. Pastikan server backend sedang berjalan.';
+                toast.error('Terjadi Kesalahan', errorMsg);
+                this.errors = [errorMsg];
             } finally {
                 this.loading = false;
             }
         },
+
+        validateForm() {
+            if (!this.form.email.trim()) {
+                toast.warning('Validasi', 'Silakan masukkan email Anda.');
+                return false;
+            }
+            if (!this.form.password.trim()) {
+                toast.warning('Validasi', 'Silakan masukkan password Anda.');
+                return false;
+            }
+            return true;
+        }
     },
 };
 </script>

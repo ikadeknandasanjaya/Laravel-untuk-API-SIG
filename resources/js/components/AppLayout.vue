@@ -92,7 +92,7 @@ export default {
         userName() {
             this.forceUpdateCounter; // Dependency for reactivity
             const user = this.user || AuthService.getCurrentUser();
-            console.log('🔍 userName computed - user:', user, 'localUser:', AuthService.localUser, 'remoteUser:', AuthService.remoteUser);
+            console.log('userName computed - user:', user, 'localUser:', AuthService.localUser, 'remoteUser:', AuthService.remoteUser);
             if (user && user.name) {
                 return user.name;
             }
@@ -102,14 +102,27 @@ export default {
     },
     methods: {
         toggleDarkMode() {
+            console.log('🌙 AppLayout toggleDarkMode clicked, current:', this.isDarkMode);
             this.isDarkMode = !this.isDarkMode;
+            console.log('🌙 Changed to:', this.isDarkMode);
+            // Save to both legacy and new format for compatibility
             localStorage.setItem('darkMode', JSON.stringify(this.isDarkMode));
+            
+            // Also update appSettings
+            const appSettings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+            appSettings.isDarkMode = this.isDarkMode;
+            localStorage.setItem('appSettings', JSON.stringify(appSettings));
+            console.log('Saved to both localStorage and appSettings');
+            
             this.applyDarkMode();
         },
         applyDarkMode() {
+            console.log('🎨 AppLayout applyDarkMode, isDarkMode:', this.isDarkMode);
             if (this.isDarkMode) {
+                console.log('Adding dark class to html');
                 document.documentElement.classList.add('dark');
             } else {
+                console.log('Removing dark class from html');
                 document.documentElement.classList.remove('dark');
             }
         },
@@ -136,22 +149,47 @@ export default {
         },
         async loadUserData() {
             // Refresh user data from API first
-            console.log('📥 loadUserData called - refreshing from API...');
+            console.log('loadUserData called - refreshing from API...');
             await AuthService.refreshUserData();
             // Then update local component state
-            console.log('✅ loadUserData - after refresh, user:', AuthService.getCurrentUser());
+            console.log('loadUserData - after refresh, user:', AuthService.getCurrentUser());
             this.refreshUserData();
         }
     },
     mounted() {
-        // Load dark mode preference from localStorage
+        console.log('AppLayout mounted');
+        
+        // Load dark mode preference from localStorage - Settings page priority
         const savedDarkMode = localStorage.getItem('darkMode');
-        if (savedDarkMode !== null) {
+        const appSettings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+        
+        console.log('Saved darkMode:', savedDarkMode);
+        console.log('AppSettings:', appSettings);
+        
+        // Use appSettings.isDarkMode if available (from Settings page), otherwise use legacy darkMode
+        if (appSettings.isDarkMode !== undefined) {
+            this.isDarkMode = appSettings.isDarkMode;
+            console.log('Using appSettings.isDarkMode:', this.isDarkMode);
+        } else if (savedDarkMode !== null) {
             this.isDarkMode = JSON.parse(savedDarkMode);
+            console.log('Using legacy darkMode:', this.isDarkMode);
         }
         
         // Apply dark mode to document
         this.applyDarkMode();
+
+        // Listen for settings changes
+        window.addEventListener('storage', (e) => {
+            console.log('Storage event:', e.key);
+            if (e.key === 'appSettings') {
+                const newSettings = JSON.parse(e.newValue || '{}');
+                if (newSettings.isDarkMode !== undefined) {
+                    console.log('🔄 Dark mode sync from storage:', newSettings.isDarkMode);
+                    this.isDarkMode = newSettings.isDarkMode;
+                    this.applyDarkMode();
+                }
+            }
+        });
 
         // Load user data
         this.loadUserData();

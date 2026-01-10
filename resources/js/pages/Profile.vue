@@ -98,7 +98,7 @@ export default {
         loadProfileData() {
             this.user = AuthService.getCurrentUser();
             this.loginSystem = AuthService.getCurrentSystem();
-            console.log('📋 Profile loaded:', this.user);
+            console.log('Profile loaded:', this.user);
         },
         formatDate(dateString) {
             if (!dateString) return '-';

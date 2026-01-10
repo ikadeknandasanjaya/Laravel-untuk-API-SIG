@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { REMOTE_API_URL } from '../config/api.js';
 
-const API_BASE_URL = 'https://gisapis.manpits.xyz/api';
+const API_BASE_URL = REMOTE_API_URL;
 
 class RuasJalanService {
     
@@ -171,8 +172,17 @@ class RuasJalanService {
     async getMasterEksisting() {
         try {
             const remoteToken = this.getRemoteToken();
-            const headers = remoteToken ? { Authorization: `Bearer ${remoteToken}` } : {};
             
+            if (!remoteToken) {
+                console.warn('No remote token - returning empty master eksisting data');
+                return {
+                    success: true,
+                    data: [],
+                    warning: 'API dosen tidak tersedia. Login dengan akun yang ter-register di API dosen.'
+                };
+            }
+            
+            const headers = { Authorization: `Bearer ${remoteToken}` };
             const response = await axios.get(`${API_BASE_URL}/meksisting`, { headers });
             
             if (response.data.code === 200) {
@@ -184,8 +194,10 @@ class RuasJalanService {
                 throw new Error('Failed to fetch master eksisting');
             }
         } catch (error) {
+            console.error('getMasterEksisting error:', error.message);
             return {
                 success: false,
+                data: [],
                 message: error.response?.data?.message || error.message || 'Failed to fetch master eksisting'
             };
         }

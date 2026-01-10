@@ -312,10 +312,10 @@ export default {
         async loadData() {
             try {
                 const id = this.$route.params.id;
-                console.log('📍 Loading ruas jalan for edit, ID:', id);
+                console.log('Loading ruas jalan for edit, ID:', id);
                 
                 const remoteToken = localStorage.getItem('remote_auth_token');
-                console.log('🔑 Remote token:', remoteToken ? 'Present' : 'MISSING');
+                console.log('Remote token:', remoteToken ? 'Present' : 'MISSING');
                 
                 const result = await RuasJalanService.getRuasJalanById(id);
                 
@@ -335,10 +335,10 @@ export default {
                         paths: ruas.paths || '',
                         keterangan: ruas.keterangan || '-',
                     };
-                    console.log('✅ Data loaded:', this.form);
+                    console.log('Data loaded:', this.form);
                 } else {
                     this.errors = [result.message || 'Gagal memuat data ruas jalan'];
-                    console.error('❌ Error:', result.message);
+                    console.error('Error:', result.message);
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -355,7 +355,7 @@ export default {
                 // Check if map DOM exists
                 const mapDom = document.getElementById('editMap');
                 if (!mapDom) {
-                    console.error('❌ Map DOM not found');
+                    console.error('Map DOM not found');
                     return;
                 }
                 
@@ -411,7 +411,7 @@ export default {
                     this.map.invalidateSize();
                 }, 200);
                 
-                console.log('✅ Edit map initialized');
+                console.log('Edit map initialized');
             } catch (error) {
                 console.error('Error initializing map:', error);
                 toast.error('Gagal menginisialisasi peta.', 'Error');
@@ -422,9 +422,9 @@ export default {
             try {
                 if (!this.form.paths) return;
                 
-                console.log('📍 Decoding polyline:', this.form.paths);
+                console.log('Decoding polyline:', this.form.paths);
                 const coords = polyline.decode(this.form.paths);
-                console.log('✅ Decoded coords:', coords);
+                console.log('Decoded coords:', coords);
                 
                 if (coords.length > 0) {
                     // Convert [lat, lng] to [lng, lat] for Leaflet
@@ -445,7 +445,7 @@ export default {
                     // Fit bounds
                     this.map.fitBounds(polylineLayer.getBounds());
                     
-                    console.log('✅ Polyline loaded to map');
+                    console.log('Polyline loaded to map');
                 }
             } catch (error) {
                 console.error('Error loading polyline to map:', error);
@@ -460,7 +460,7 @@ export default {
         },
         
         onDrawEdited(e) {
-            console.log('✏️ Draw edited event');
+            console.log('Draw edited event');
             this.encodePolyline();
         },
         
@@ -483,7 +483,7 @@ export default {
                 const latLngs = polylineLayer.getLatLngs();
                 const coords = latLngs.map(latlng => [latlng.lat, latlng.lng]);
                 
-                console.log('📍 Coords to encode:', coords);
+                console.log('Coords to encode:', coords);
                 
                 // Encode to Google polyline format
                 const encoded = polyline.encode(coords);
@@ -503,7 +503,7 @@ export default {
             this.errors = [];
             
             try {
-                console.log('💾 Submitting form data:', this.form);
+                console.log('Submitting form data:', this.form);
                 
                 const result = await RuasJalanService.updateRuasJalan(this.$route.params.id, this.form);
                 

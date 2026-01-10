@@ -9,7 +9,7 @@
                         <i class="fas fa-map-marked-alt"></i>
                     </div>
                     <div class="logo-text">
-                        <h1>NeoGIS</h1>
+                        <h1>GISBali</h1>
                         <span>v3.1.0</span>
                     </div>
                 </div>

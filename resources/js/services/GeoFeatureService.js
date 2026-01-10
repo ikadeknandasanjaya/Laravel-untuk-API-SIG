@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { LOCAL_API_URL } from '../config/api.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = LOCAL_API_URL;
 
 class GeoFeatureService {
     constructor() {
@@ -161,18 +162,7 @@ class GeoFeatureService {
      * Create a circle
      */
     async createCircle(circleData) {
-        return this.createFeature({
-            ...circleData,
-            geometry_type: 'circle',
-            coordinates: {
-                lat: circleData.latitude,
-                lng: circleData.longitude
-            },
-            properties: {
-                radius: circleData.radius,
-                ...(circleData.properties || {})
-            }
-        });
+        return this.createFeature(circleData);
     }
 
     /**

@@ -248,17 +248,31 @@ export default {
             
             this.loading = true;
             try {
+                // Pastikan koordinat valid
+                const lat = parseFloat(this.form.center.lat);
+                const lng = parseFloat(this.form.center.lng);
+                
+                // Validasi range koordinat
+                if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    toast.error('Koordinat tidak valid. Silakan klik pada map untuk set lokasi.', 'Error');
+                    this.loading = false;
+                    return;
+                }
+                
                 const circleData = {
                     nama: this.form.name,
                     deskripsi: this.form.description || '',
                     kategori_id: this.form.category_id ? parseInt(this.form.category_id) : null,
-                    coordinates: [this.form.center.lng, this.form.center.lat],
+                    geometry_type: 'circle',
+                    coordinates: [lng, lat],
                     properties: {
                         radius: parseFloat(this.form.radius),
                         color: this.form.color,
                         opacity: parseFloat(this.form.opacity)
                     }
                 };
+                
+                console.log('Sending circle data:', JSON.stringify(circleData, null, 2));
                 
                 const result = await GeoFeatureService.createCircle(circleData);
                 
@@ -270,7 +284,11 @@ export default {
                 }
             } catch (error) {
                 console.error('Error saving circle:', error);
-                toast.error('Gagal menyimpan circle. Silakan coba lagi.', 'Error');
+                console.error('Full error response:', JSON.stringify(error.response?.data, null, 2));
+                const errorMsg = error.response?.data?.errors 
+                    ? Object.values(error.response.data.errors).flat().join(', ')
+                    : error.response?.data?.message || 'Gagal menyimpan circle. Silakan coba lagi.';
+                toast.error(errorMsg, 'Error');
             } finally {
                 this.loading = false;
             }

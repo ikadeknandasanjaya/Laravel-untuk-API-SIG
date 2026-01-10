@@ -260,7 +260,7 @@ export default {
     methods: {
         async loadData() {
             try {
-                console.log('📍 Loading location data...');
+                console.log('Loading location data...');
                 
                 // Load all regions from /mregion endpoint
                 const result = await RegionService.getAllRegions();
@@ -273,33 +273,33 @@ export default {
                     if (Array.isArray(data.provinsi)) {
                         this.provinsiList = data.provinsi;
                         this.stats.totalProvinsi = this.provinsiList.length;
-                        console.log('✅ Provinsi:', this.provinsiList.length);
+                        console.log('Provinsi:', this.provinsiList.length);
                     }
                     
                     // Kabupaten
                     if (Array.isArray(data.kabupaten)) {
                         this.kabupatenList = data.kabupaten;
                         this.stats.totalKabupaten = this.kabupatenList.length;
-                        console.log('✅ Kabupaten:', this.kabupatenList.length);
+                        console.log('Kabupaten:', this.kabupatenList.length);
                     }
                     
                     // Kecamatan
                     if (Array.isArray(data.kecamatan)) {
                         this.kecamatanList = data.kecamatan;
                         this.stats.totalKecamatan = this.kecamatanList.length;
-                        console.log('✅ Kecamatan:', this.kecamatanList.length);
+                        console.log('Kecamatan:', this.kecamatanList.length);
                     }
                     
                     // Desa
                     if (Array.isArray(data.desa)) {
                         this.desaList = data.desa;
                         this.stats.totalDesa = this.desaList.length;
-                        console.log('✅ Desa:', this.desaList.length);
+                        console.log('Desa:', this.desaList.length);
                     }
                     
-                    console.log('✅ Location data loaded:', this.stats);
+                    console.log('Location data loaded:', this.stats);
                 } else {
-                    console.error('❌ Error loading data:', result.message);
+                    console.error('Error loading data:', result.message);
                     toast.error(result.message || 'Gagal memuat data lokasi', 'Error');
                 }
             } catch (error) {

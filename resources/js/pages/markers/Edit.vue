@@ -195,7 +195,7 @@ export default {
                 kategori_id: '',
                 latitude: null,
                 longitude: null,
-                icon: 'fa-map-pin',
+                icon: 'fas fa-map-marker-alt',
                 color: '#3b82f6'
             },
             originalForm: {},
@@ -205,13 +205,18 @@ export default {
             map: null,
             marker: null,
             availableIcons: [
-                { class: 'fa-map-pin', name: 'Pin' },
-                { class: 'fa-info-circle', name: 'Info' },
-                { class: 'fa-star', name: 'Star' },
-                { class: 'fa-heart', name: 'Heart' },
-                { class: 'fa-camera', name: 'Camera' },
-                { class: 'fa-building', name: 'Building' },
-                { class: 'fa-tree', name: 'Tree' }
+                { class: 'fas fa-map-marker-alt', name: 'Default' },
+                { class: 'fas fa-home', name: 'Home' },
+                { class: 'fas fa-building', name: 'Building' },
+                { class: 'fas fa-store', name: 'Store' },
+                { class: 'fas fa-utensils', name: 'Restaurant' },
+                { class: 'fas fa-bed', name: 'Hotel' },
+                { class: 'fas fa-gas-pump', name: 'Gas Station' },
+                { class: 'fas fa-hospital', name: 'Hospital' },
+                { class: 'fas fa-graduation-cap', name: 'School' },
+                { class: 'fas fa-tree', name: 'Park' },
+                { class: 'fas fa-camera', name: 'Tourist Spot' },
+                { class: 'fas fa-car', name: 'Parking' }
             ],
             availableColors: [
                 { name: 'Blue', value: '#3b82f6' },
@@ -226,6 +231,14 @@ export default {
     async mounted() {
         await this.loadMarkerData();
         this.initMap();
+    },
+    watch: {
+        'form.icon'() {
+            this.updateMapMarker();
+        },
+        'form.color'() {
+            this.updateMapMarker();
+        }
     },
     methods: {
         async loadMarkerData() {
@@ -286,7 +299,33 @@ export default {
             }
 
             if (this.form.latitude && this.form.longitude) {
-                this.marker = L.marker([this.form.latitude, this.form.longitude])
+                // Create custom icon with selected color
+                const customIcon = L.divIcon({
+                    className: 'custom-marker-icon',
+                    html: `<div style="
+                        background-color: ${this.form.color};
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 50% 50% 50% 0;
+                        transform: rotate(-45deg);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: 2px solid white;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                    ">
+                        <i class="${this.form.icon}" style="
+                            color: white;
+                            font-size: 14px;
+                            transform: rotate(45deg);
+                        "></i>
+                    </div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                    popupAnchor: [0, -32]
+                });
+                
+                this.marker = L.marker([this.form.latitude, this.form.longitude], { icon: customIcon })
                     .addTo(this.map);
                 this.map.setView([this.form.latitude, this.form.longitude], 12);
             }

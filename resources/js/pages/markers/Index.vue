@@ -1,204 +1,143 @@
 <template>
     <AppLayout>
-        <div class="markers-container">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
-            <div class="page-header">
-                <div class="header-content">
-                    <h1>Marker Overview</h1>
-                    <p>Manage all your map markers in one place</p>
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Markers</h1>
+                    <p class="mt-1 text-sm text-gray-500">Manage all your map markers in one place</p>
                 </div>
-                <div class="header-actions">
-                    <router-link to="/markers/create" class="btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Add Marker
-                    </router-link>
-                </div>
-            </div>
-
-            <!-- Filters and Search -->
-            <div class="filters-section">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input 
-                        type="text" 
-                        placeholder="Search markers..." 
-                        v-model="searchQuery"
-                        @input="filterMarkers"
-                    >
-                </div>
-                <div class="filter-controls">
-                    <select v-model="selectedCategory" @change="filterMarkers" class="filter-select">
-                        <option value="">All Categories</option>
-                        <option v-for="category in categories" :key="category.id" :value="category.id">
-                            {{ category.name }}
-                        </option>
-                    </select>
-                    <select v-model="sortBy" @change="sortMarkers" class="filter-select">
-                        <option value="name">Sort by Name</option>
-                        <option value="created_at">Sort by Date</option>
-                        <option value="category">Sort by Category</option>
-                    </select>
-                </div>
+                <router-link to="/markers/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Marker
+                </router-link>
             </div>
 
             <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-number">{{ totalMarkers }}</div>
-                        <div class="stat-label">Total Markers</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-tags"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-number">{{ categories.length }}</div>
-                        <div class="stat-label">Categories</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Total Markers</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">{{ totalMarkers }}</p>
+                            </div>
+                            <div class="bg-blue-100 rounded-lg p-3">
+                                <i class="fas fa-map-marker-alt text-2xl text-blue-600"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-calendar"></i>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Categories</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">{{ categories.length }}</p>
+                            </div>
+                            <div class="bg-green-100 rounded-lg p-3">
+                                <i class="fas fa-tags text-2xl text-green-600"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <div class="stat-number">{{ markersThisMonth }}</div>
-                        <div class="stat-label">This Month</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">This Month</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">{{ markersThisMonth }}</p>
+                            </div>
+                            <div class="bg-purple-100 rounded-lg p-3">
+                                <i class="fas fa-calendar text-2xl text-purple-600"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Markers List -->
-            <div class="markers-list">
-                <div class="list-header">
-                    <h2>Markers ({{ filteredMarkers.length }})</h2>
-                    <div class="view-toggle">
-                        <button 
-                            @click="viewMode = 'grid'" 
-                            :class="{ active: viewMode === 'grid' }"
-                            class="view-btn"
-                        >
-                            <i class="fas fa-th-large"></i>
-                        </button>
-                        <button 
-                            @click="viewMode = 'list'" 
-                            :class="{ active: viewMode === 'list' }"
-                            class="view-btn"
-                        >
-                            <i class="fas fa-list"></i>
-                        </button>
+            <!-- Filters -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="px-6 py-4">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <input 
+                                type="text" 
+                                placeholder="Search markers..." 
+                                v-model="searchQuery"
+                                @input="filterMarkers"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                        </div>
+                        <select v-model="selectedCategory" @change="filterMarkers" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Categories</option>
+                            <option v-for="category in categories" :key="category.id" :value="category.id">
+                                {{ category.name }}
+                            </option>
+                        </select>
+                        <select v-model="sortBy" @change="sortMarkers" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="name">Sort by Name</option>
+                            <option value="created_at">Sort by Date</option>
+                            <option value="category">Sort by Category</option>
+                        </select>
                     </div>
                 </div>
+            </div>
 
-                <!-- Grid View -->
-                <div v-if="viewMode === 'grid'" class="markers-grid">
-                    <div v-if="filteredMarkers.length === 0" class="empty-state">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <h3>No markers found</h3>
-                        <p>Start by creating your first marker</p>
-                        <router-link to="/markers/create" class="btn-primary">
-                            <i class="fas fa-plus"></i>
-                            Add Marker
-                        </router-link>
-                    </div>
-                    <div 
-                        v-for="marker in filteredMarkers" 
-                        :key="marker.id" 
-                        class="marker-card"
-                    >
-                        <div class="marker-header">
-                            <div class="marker-icon" :style="{ background: marker.properties?.color || '#3b82f6' }">
-                                <i :class="getMarkerIcon(marker)"></i>
+            <!-- Loading -->
+            <div v-if="loading" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <p class="mt-4 text-gray-600">Loading markers...</p>
+            </div>
+
+            <!-- Markers Grid -->
+            <div v-else>
+                <div v-if="filteredMarkers.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                    <i class="fas fa-map-marker-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 mb-2">No markers found</p>
+                    <p class="text-sm text-gray-500 mb-4">Start by creating your first marker</p>
+                    <router-link to="/markers/create" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add Marker
+                    </router-link>
+                </div>
+
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="marker in filteredMarkers" :key="marker.id" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div 
+                                    class="w-12 h-12 rounded-lg flex items-center justify-center text-white text-xl"
+                                    :style="{ backgroundColor: marker.properties?.color || '#3b82f6' }"
+                                >
+                                    <i :class="getMarkerIcon(marker)"></i>
+                                </div>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
+                                    {{ getCategoryName(marker.kategori_id) }}
+                                </span>
                             </div>
-                            <div class="marker-category">
-                                {{ getCategoryName(marker.kategori_id) }}
-                            </div>
-                        </div>
-                        <div class="marker-content">
-                            <h3>{{ marker.nama }}</h3>
-                            <p>{{ marker.deskripsi || 'No description' }}</p>
-                            <div class="marker-location">
-                                <i class="fas fa-map-pin"></i>
+                            
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ marker.nama }}</h3>
+                            <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ marker.deskripsi || 'No description' }}</p>
+                            
+                            <div class="flex items-center text-xs text-gray-500 mb-4">
+                                <i class="fas fa-map-pin mr-1"></i>
                                 {{ getMarkerCoordinates(marker) }}
                             </div>
-                        </div>
-                        <div class="marker-actions">
-                            <button @click="viewOnMap(marker)" class="action-btn view">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <router-link :to="`/markers/${marker.id}/edit`" class="action-btn edit">
-                                <i class="fas fa-edit"></i>
-                            </router-link>
-                            <button @click="deleteMarker(marker)" class="action-btn delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            
+                            <div class="flex gap-2">
+                                <button @click="viewOnMap(marker)" class="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-eye mr-1"></i> View
+                                </button>
+                                <router-link :to="`/markers/${marker.id}/edit`" class="flex-1 px-3 py-2 bg-green-50 text-green-600 rounded-lg text-sm hover:bg-green-100 transition-colors text-center">
+                                    <i class="fas fa-edit mr-1"></i> Edit
+                                </router-link>
+                                <button @click="deleteMarker(marker)" class="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- List View -->
-                <div v-if="viewMode === 'list'" class="markers-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Location</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-if="filteredMarkers.length === 0">
-                                <td colspan="5" class="empty-row">
-                                    <div class="empty-state">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span>No markers found</span>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr v-for="marker in filteredMarkers" :key="marker.id">
-                                <td>
-                                    <div class="marker-name">
-                                        <i :class="getMarkerIcon(marker)"></i>
-                                        {{ marker.nama }}
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="category-badge">
-                                        {{ getCategoryName(marker.kategori_id) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="location">
-                                        {{ getMarkerCoordinates(marker) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="date">
-                                        {{ formatDate(marker.created_at) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="table-actions">
-                                        <button @click="viewOnMap(marker)" class="action-btn view">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <router-link :to="`/markers/${marker.id}/edit`" class="action-btn edit">
-                                            <i class="fas fa-edit"></i>
-                                        </router-link>
-                                        <button @click="deleteMarker(marker)" class="action-btn delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
@@ -287,7 +226,7 @@ export default {
         },
         getMarkerIcon(marker) {
             // Get icon from properties or use default
-            return marker.properties?.icon ? `fas fa-${marker.properties.icon}` : 'fas fa-map-marker-alt';
+            return marker.properties?.icon || 'fas fa-map-marker-alt';
         },
         getMarkerCoordinates(marker) {
             // Handle both old and new coordinate format

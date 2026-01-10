@@ -2,21 +2,21 @@
     <AppLayout>
         <div class="settings-container">
             <div class="settings-header">
-                <h1>Settings</h1>
-                <p>Customize your application preferences</p>
+                <h1>Pengaturan</h1>
+                <p>Kustomisasi preferensi aplikasi Anda</p>
             </div>
 
             <!-- Appearance Settings -->
             <div class="settings-section">
                 <div class="section-header">
-                    <h2>Appearance</h2>
-                    <p>Customize how the application looks and feels</p>
+                    <h2>Tampilan</h2>
+                    <p>Sesuaikan cara aplikasi terlihat dan terasa</p>
                 </div>
                 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Dark Mode</h3>
-                        <p>Switch between light and dark themes</p>
+                        <h3>Mode Gelap</h3>
+                        <p>Beralih antara tema terang dan gelap</p>
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
@@ -32,8 +32,8 @@
 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Sidebar Collapsed</h3>
-                        <p>Keep sidebar collapsed by default</p>
+                        <h3>Sidebar Terlipat</h3>
+                        <p>Jaga sidebar tetap terlipat secara default</p>
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
@@ -51,14 +51,14 @@
             <!-- Map Settings -->
             <div class="settings-section">
                 <div class="section-header">
-                    <h2>Map Preferences</h2>
-                    <p>Configure default map settings</p>
+                    <h2>Preferensi Peta</h2>
+                    <p>Konfigurasi pengaturan peta default</p>
                 </div>
                 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Default Map Style</h3>
-                        <p>Choose your preferred map tile layer</p>
+                        <h3>Gaya Peta Default</h3>
+                        <p>Pilih layer tile peta pilihan Anda</p>
                     </div>
                     <div class="setting-control">
                         <select v-model="mapStyle" @change="saveMapStyle" class="select-input">
@@ -71,8 +71,8 @@
 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Default Zoom Level</h3>
-                        <p>Set the initial zoom level for maps</p>
+                        <h3>Level Zoom Default</h3>
+                        <p>Atur level zoom awal untuk peta</p>
                     </div>
                     <div class="setting-control">
                         <input 
@@ -91,14 +91,14 @@
             <!-- Data Settings -->
             <div class="settings-section">
                 <div class="section-header">
-                    <h2>Data Management</h2>
-                    <p>Configure data display and export options</p>
+                    <h2>Manajemen Data</h2>
+                    <p>Konfigurasi opsi tampilan dan ekspor data</p>
                 </div>
                 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Items Per Page</h3>
-                        <p>Number of items to display in data tables</p>
+                        <h3>Item Per Halaman</h3>
+                        <p>Jumlah item yang ditampilkan di tabel data</p>
                     </div>
                     <div class="setting-control">
                         <select v-model="itemsPerPage" @change="saveItemsPerPage" class="select-input">
@@ -112,8 +112,8 @@
 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Auto-save</h3>
-                        <p>Automatically save changes while editing</p>
+                        <h3>Simpan Otomatis</h3>
+                        <p>Simpan perubahan otomatis saat mengedit</p>
                     </div>
                     <div class="setting-control">
                         <label class="toggle-switch">
@@ -126,18 +126,41 @@
                         </label>
                     </div>
                 </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Notifikasi</h3>
+                        <p>Tampilkan notifikasi untuk setiap aksi</p>
+                    </div>
+                    <div class="setting-control">
+                        <label class="toggle-switch">
+                            <input 
+                                type="checkbox" 
+                                :checked="showNotifications"
+                                @change="toggleNotifications"
+                            >
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
-            <!-- Actions -->
+            <!-- Aksi -->
             <div class="settings-actions">
                 <button @click="resetToDefaults" class="btn-secondary">
                     <i class="fas fa-undo"></i>
-                    Reset to Defaults
+                    Reset ke Default
                 </button>
                 <button @click="exportSettings" class="btn-primary">
                     <i class="fas fa-download"></i>
-                    Export Settings
+                    Ekspor Pengaturan
                 </button>
+            </div>
+
+            <!-- Success Message -->
+            <div v-if="successMessage" class="success-message">
+                <i class="fas fa-check-circle"></i>
+                {{ successMessage }}
             </div>
         </div>
     </AppLayout>
@@ -145,6 +168,7 @@
 
 <script>
 import AppLayout from '../components/AppLayout.vue';
+import toast from '../utils/toast.js';
 
 export default {
     name: 'Settings',
@@ -158,16 +182,41 @@ export default {
             mapStyle: 'openstreetmap',
             defaultZoom: 10,
             itemsPerPage: 25,
-            autoSave: true
+            autoSave: true,
+            showNotifications: true,
+            successMessage: ''
         }
     },
     mounted() {
+        console.log('⚙️ Settings mounted');
         this.loadSettings();
+        this.applyDarkMode();
+        
+        // Listen to dark mode changes from AppLayout
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'appSettings') {
+                console.log('Storage event received for appSettings');
+                const newSettings = JSON.parse(e.newValue || '{}');
+                if (newSettings.isDarkMode !== undefined && newSettings.isDarkMode !== this.isDarkMode) {
+                    console.log('🔄 Dark mode sync from storage:', newSettings.isDarkMode);
+                    this.isDarkMode = newSettings.isDarkMode;
+                    this.applyDarkMode();
+                }
+            }
+        });
+    },
+    watch: {
+        isDarkMode(newVal) {
+            console.log('👁️ isDarkMode watcher triggered, new value:', newVal);
+            this.applyDarkMode();
+        }
     },
     methods: {
         loadSettings() {
             // Load settings from localStorage
             const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+            
+            console.log('📖 Loading settings from localStorage:', settings);
             
             this.isDarkMode = settings.isDarkMode ?? false;
             this.sidebarCollapsed = settings.sidebarCollapsed ?? false;
@@ -175,6 +224,9 @@ export default {
             this.defaultZoom = settings.defaultZoom ?? 10;
             this.itemsPerPage = settings.itemsPerPage ?? 25;
             this.autoSave = settings.autoSave ?? true;
+            this.showNotifications = settings.showNotifications ?? true;
+            
+            console.log('Settings loaded');
         },
         saveSettings() {
             const settings = {
@@ -183,56 +235,106 @@ export default {
                 mapStyle: this.mapStyle,
                 defaultZoom: this.defaultZoom,
                 itemsPerPage: this.itemsPerPage,
-                autoSave: this.autoSave
+                autoSave: this.autoSave,
+                showNotifications: this.showNotifications
             };
             
+            console.log('Saving settings:', settings);
             localStorage.setItem('appSettings', JSON.stringify(settings));
+            localStorage.setItem('lastSettingsUpdate', new Date().toISOString());
             
             // Emit event to parent components if needed
             this.$emit('settings-changed', settings);
+            
+            // Show success message
+            this.successMessage = 'Pengaturan berhasil disimpan!';
+            console.log('Settings saved successfully');
+            setTimeout(() => {
+                this.successMessage = '';
+            }, 3000);
         },
         toggleDarkMode() {
+            console.log('🌙 toggleDarkMode clicked, current:', this.isDarkMode);
             this.isDarkMode = !this.isDarkMode;
+            console.log('🌙 Dark mode changed to:', this.isDarkMode);
             this.applyDarkMode();
             this.saveSettings();
+            if (this.showNotifications) {
+                const msg = this.isDarkMode ? 'Mode Gelap Diaktifkan' : 'Mode Terang Diaktifkan';
+                console.log('📢 Toast:', msg);
+                toast.info(msg, 'Info');
+            }
         },
         applyDarkMode() {
+            console.log('🎨 applyDarkMode called, isDarkMode:', this.isDarkMode);
             if (this.isDarkMode) {
+                console.log('Adding dark class');
                 document.documentElement.classList.add('dark');
+                localStorage.setItem('darkMode', 'true');
             } else {
+                console.log('Removing dark class');
                 document.documentElement.classList.remove('dark');
+                localStorage.setItem('darkMode', 'false');
             }
         },
         toggleSidebarCollapsed() {
+            console.log('📂 toggleSidebarCollapsed, current:', this.sidebarCollapsed);
             this.sidebarCollapsed = !this.sidebarCollapsed;
+            localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed ? 'true' : 'false');
             this.saveSettings();
+            if (this.showNotifications) {
+                const msg = this.sidebarCollapsed ? 'Sidebar Dilipat' : 'Sidebar Diperluas';
+                console.log('📢 Toast:', msg);
+                toast.info(msg, 'Info');
+            }
+            // Broadcast to sidebar
+            window.dispatchEvent(new CustomEvent('sidebar-toggle', { detail: { collapsed: this.sidebarCollapsed } }));
         },
         saveMapStyle() {
+            localStorage.setItem('mapStyle', this.mapStyle);
             this.saveSettings();
+            if (this.showNotifications) {
+                toast.info(`Gaya Peta Diubah ke ${this.mapStyle}`, 'Info');
+            }
         },
         saveDefaultZoom() {
+            localStorage.setItem('defaultZoom', this.defaultZoom);
             this.saveSettings();
         },
         saveItemsPerPage() {
+            localStorage.setItem('itemsPerPage', this.itemsPerPage);
             this.saveSettings();
+            if (this.showNotifications) {
+                toast.info(`Items per halaman diubah ke ${this.itemsPerPage}`, 'Info');
+            }
         },
         toggleAutoSave() {
             this.autoSave = !this.autoSave;
+            localStorage.setItem('autoSave', this.autoSave ? 'true' : 'false');
+            this.saveSettings();
+            if (this.showNotifications) {
+                toast.info(this.autoSave ? 'Simpan Otomatis Diaktifkan' : 'Simpan Otomatis Dinonaktifkan', 'Info');
+            }
+        },
+        toggleNotifications() {
+            this.showNotifications = !this.showNotifications;
+            localStorage.setItem('showNotifications', this.showNotifications ? 'true' : 'false');
             this.saveSettings();
         },
         resetToDefaults() {
-            if (confirm('Are you sure you want to reset all settings to defaults?')) {
+            if (confirm('Apakah Anda yakin ingin mereset semua pengaturan ke default?')) {
                 this.isDarkMode = false;
                 this.sidebarCollapsed = false;
                 this.mapStyle = 'openstreetmap';
                 this.defaultZoom = 10;
                 this.itemsPerPage = 25;
                 this.autoSave = true;
+                this.showNotifications = true;
                 
                 this.applyDarkMode();
                 this.saveSettings();
                 
-                alert('Settings have been reset to defaults.');
+                toast.success('Pengaturan berhasil direset ke default!', 'Sukses');
             }
         },
         exportSettings() {
@@ -243,6 +345,7 @@ export default {
                 defaultZoom: this.defaultZoom,
                 itemsPerPage: this.itemsPerPage,
                 autoSave: this.autoSave,
+                showNotifications: this.showNotifications,
                 exportDate: new Date().toISOString()
             };
             
@@ -251,8 +354,12 @@ export default {
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = 'gis-app-settings.json';
+            link.download = `gis-app-settings-${new Date().getTime()}.json`;
             link.click();
+            
+            if (this.showNotifications) {
+                toast.success('Pengaturan berhasil diekspor!', 'Sukses');
+            }
         }
     }
 }
@@ -506,5 +613,41 @@ input:checked + .slider:before {
 
 :global(.dark) .btn-secondary:hover {
     background: #4b5563;
+}
+
+/* Success Message */
+.success-message {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #d1fae5;
+    border: 1px solid #6ee7b7;
+    border-radius: 8px;
+    color: #065f46;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    animation: slideIn 0.3s ease-out;
+}
+
+.success-message i {
+    color: #10b981;
+}
+
+:global(.dark) .success-message {
+    background: #064e3b;
+    border-color: #047857;
+    color: #a7f3d0;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>

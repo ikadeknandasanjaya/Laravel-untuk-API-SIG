@@ -1,7 +1,5 @@
 import axios from 'axios';
-
-const REMOTE_API_URL = 'https://gisapis.manpits.xyz/api';
-const LOCAL_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import { LOCAL_API_URL, REMOTE_API_URL } from '../config/api.js';
 
 class AuthService {
     constructor() {
@@ -59,7 +57,7 @@ class AuthService {
     // LOGIN (LOCAL + REMOTE DUAL - attempt both simultaneously)
     async loginDual(credentials) {
         try {
-            console.log('🔐 Attempting DUAL LOGIN (local + remote)...');
+            console.log('Attempting DUAL LOGIN (local + remote)...');
             
             const response = await axios.post(`${LOCAL_API_URL}/login`, {
                 email: credentials.email,
@@ -70,13 +68,13 @@ class AuthService {
                 // Store LOCAL token (Sanctum)
                 this.localToken = response.data.access_token;
                 localStorage.setItem('local_auth_token', this.localToken);
-                console.log('✅ LOCAL token saved (Sanctum):', this.localToken.substring(0, 20) + '...');
+                console.log('LOCAL token saved (Sanctum):', this.localToken.substring(0, 20) + '...');
                 
                 // Store REMOTE token if available (JWT from Dosen API)
                 if (response.data?.remote_token) {
                     this.remoteToken = response.data.remote_token;
                     localStorage.setItem('remote_auth_token', this.remoteToken);
-                    console.log('✅ REMOTE token saved (JWT):', this.remoteToken.substring(0, 20) + '...');
+                    console.log('REMOTE token saved (JWT):', this.remoteToken.substring(0, 20) + '...');
                 }
                 
                 this.loginSystem = 'local';
@@ -129,21 +127,47 @@ class AuthService {
                 // Store LOCAL token
                 this.localToken = response.data.access_token;
                 localStorage.setItem('local_auth_token', this.localToken);
-                console.log('✅ LOCAL token saved:', this.localToken.substring(0, 20) + '...');
+                console.log('LOCAL token saved:', this.localToken.substring(0, 20) + '...');
                 
-                // Note: Remote registration is done in backend
-                // But token is obtained via login() method later
-                console.log('Registered locally. Remote registration status:', response.data?.remote_success);
+                const remoteSuccess = response.data?.remote_success || false;
+                console.log('Remote registration status:', remoteSuccess);
 
                 this.loginSystem = 'local';
                 localStorage.setItem('login_system', 'local');
                 
                 await this.getLocalUser();
                 
+                // PENTING: Jika remote registration berhasil, login ke API dosen untuk mendapatkan JWT token
+                if (remoteSuccess) {
+                    console.log('Attempting to login to remote API to get JWT token...');
+                    try {
+                        const remoteLoginResponse = await axios.post(`${REMOTE_API_URL}/login`, {
+                            email: credentials.email,
+                            password: credentials.password
+                        }, { timeout: 10000 });
+
+                        if (remoteLoginResponse.data.meta?.code === 200) {
+                            this.remoteToken = remoteLoginResponse.data.meta.token;
+                            localStorage.setItem('remote_auth_token', this.remoteToken);
+                            console.log('REMOTE JWT token saved:', this.remoteToken.substring(0, 20) + '...');
+                            
+                            const expiryTimestamp = Date.now() + (remoteLoginResponse.data.meta['token-expired'] * 1000);
+                            localStorage.setItem('remote_token_expired', expiryTimestamp.toString());
+                            
+                            await this.getRemoteUser();
+                        } else {
+                            console.warn('Remote login after registration failed');
+                        }
+                    } catch (remoteLoginError) {
+                        console.warn('Could not get remote token after registration:', remoteLoginError.message);
+                    }
+                }
+                
                 return { 
                     success: true, 
                     system: 'local', 
-                    remoteSuccess: response.data?.remote_success || false,
+                    remoteSuccess: remoteSuccess,
+                    remoteTokenObtained: !!this.remoteToken,
                     message: 'Registrasi berhasil!' 
                 };
             }
@@ -228,13 +252,13 @@ class AuthService {
                 // Store LOCAL token
                 this.localToken = response.data.access_token || response.data.token;
                 localStorage.setItem('local_auth_token', this.localToken);
-                console.log('✅ LOCAL token saved:', this.localToken.substring(0, 20) + '...');
+                console.log('LOCAL token saved:', this.localToken.substring(0, 20) + '...');
                 
                 // Store REMOTE token if available (from dual login)
                 if (response.data?.remote_token) {
                     this.remoteToken = response.data.remote_token;
                     localStorage.setItem('remote_auth_token', this.remoteToken);
-                    console.log('✅ REMOTE token saved:', this.remoteToken.substring(0, 20) + '...');
+                    console.log('REMOTE token saved:', this.remoteToken.substring(0, 20) + '...');
                 }
                 
                 this.loginSystem = 'local';
@@ -263,19 +287,19 @@ class AuthService {
     async getRemoteUser() {
         try {
             if (!this.remoteToken) {
-                console.log('⚠️ getRemoteUser - no remoteToken');
+                console.log('getRemoteUser - no remoteToken');
                 return;
             }
-            console.log('📡 getRemoteUser - fetching from', REMOTE_API_URL);
+            console.log('getRemoteUser - fetching from', REMOTE_API_URL);
             const response = await axios.get(`${REMOTE_API_URL}/user`, {
                 headers: { Authorization: `Bearer ${this.remoteToken}` }
             });
-            console.log('✅ getRemoteUser response:', response.data);
+            console.log('getRemoteUser response:', response.data);
             // Handle response structure: data.user or data.data.user
             const userData = response.data.data?.user || response.data.user;
             if (userData) {
                 this.remoteUser = userData;
-                console.log('💾 remoteUser stored:', this.remoteUser);
+                console.log('remoteUser stored:', this.remoteUser);
                 localStorage.setItem('remote_user', JSON.stringify(this.remoteUser));
             }
         } catch (error) {
@@ -286,19 +310,19 @@ class AuthService {
     async getLocalUser() {
         try {
             if (!this.localToken) {
-                console.log('⚠️ getLocalUser - no localToken');
+                console.log('getLocalUser - no localToken');
                 return;
             }
-            console.log('📡 getLocalUser - fetching from', LOCAL_API_URL);
+            console.log('getLocalUser - fetching from', LOCAL_API_URL);
             const response = await axios.get(`${LOCAL_API_URL}/user`, {
                 headers: { Authorization: `Bearer ${this.localToken}` }
             });
-            console.log('✅ getLocalUser response:', response.data);
+            console.log('getLocalUser response:', response.data);
             // Handle response structure: data or data.user
             const userData = response.data.data || response.data.user || response.data;
             if (userData && (userData.name || userData.email)) {
                 this.localUser = userData;
-                console.log('💾 localUser stored:', this.localUser);
+                console.log('localUser stored:', this.localUser);
                 localStorage.setItem('local_user', JSON.stringify(this.localUser));
             }
         } catch (error) {
@@ -311,14 +335,14 @@ class AuthService {
             console.log('🔄 AuthService.refreshUserData() - localToken:', !!this.localToken, 'remoteToken:', !!this.remoteToken);
             // Try to get fresh user data from API
             if (this.localToken) {
-                console.log('📡 Fetching local user data...');
+                console.log('Fetching local user data...');
                 await this.getLocalUser();
             }
             if (this.remoteToken) {
-                console.log('📡 Fetching remote user data...');
+                console.log('Fetching remote user data...');
                 await this.getRemoteUser();
             }
-            console.log('✅ refreshUserData complete - user:', this.getCurrentUser());
+            console.log('refreshUserData complete - user:', this.getCurrentUser());
         } catch (error) {
             console.error('Refresh user data error:', error);
         }
@@ -427,7 +451,7 @@ class AuthService {
 
     // DEBUG: Log current token status
     logTokenStatus() {
-        console.log('📋 TOKEN STATUS:');
+        console.log('TOKEN STATUS:');
         console.log('  Local Token:', this.localToken ? '✅ ' + this.localToken.substring(0, 20) + '...' : '❌ None');
         console.log('  Remote Token:', this.remoteToken ? '✅ ' + this.remoteToken.substring(0, 20) + '...' : '❌ None');
         console.log('  Local User:', this.localUser ? '✅ ' + (this.localUser.email || this.localUser.name) : '❌ None');
@@ -439,7 +463,7 @@ class AuthService {
 
     // DEBUG: Show localStorage
     logStorageStatus() {
-        console.log('💾 LOCALSTORAGE:');
+        console.log('LOCALSTORAGE:');
         console.log('  local_auth_token:', localStorage.getItem('local_auth_token') ? '✅' : '❌');
         console.log('  remote_auth_token:', localStorage.getItem('remote_auth_token') ? '✅' : '❌');
         console.log('  local_user:', localStorage.getItem('local_user') ? '✅' : '❌');

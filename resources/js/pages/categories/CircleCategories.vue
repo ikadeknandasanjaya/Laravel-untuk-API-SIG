@@ -109,7 +109,7 @@ export default {
             try {
                 const data = await this.categoryService.getAll();
                 this.categories = Array.isArray(data) ? data : [];
-                console.log('✅ Categories loaded:', this.categories);
+                console.log('Categories loaded:', this.categories);
             } catch (error) {
                 console.error('Error loading categories:', error);
                 toast.error('Failed to load categories', 'Error');

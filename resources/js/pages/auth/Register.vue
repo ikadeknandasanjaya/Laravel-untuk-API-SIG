@@ -90,29 +90,29 @@
                             </div>
 
                             <div class="group">
-                                <label for="password" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                                    <i class="fas fa-lock text-purple-600 mr-2"></i>
+                                <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
                                     Kata Sandi
                                 </label>
                                 <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
                                     <input
                                         id="password"
                                         v-model="form.password"
                                         :type="showPassword ? 'text' : 'password'"
                                         autocomplete="new-password"
                                         required
-                                        placeholder="Masukkan kata sandi"
-                                        class="block w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-4 text-gray-900 placeholder-gray-500 shadow-sm focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                                        placeholder="Masukkan password Anda"
+                                        class="block w-full rounded-xl border-2 border-gray-200 bg-gray-50 pl-12 pr-12 py-4 text-gray-900 placeholder-gray-500 shadow-sm focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
                                     />
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-                                        <button
-                                            type="button"
-                                            @click="showPassword = !showPassword"
-                                            class="text-gray-400 hover:text-gray-600 transition-colors"
-                                        >
-                                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="showPassword = !showPassword"
+                                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-purple-600 focus:outline-none transition-colors duration-200 cursor-pointer z-20"
+                                    >
+                                        <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                    </button>
                                 </div>
                                 <div class="mt-2 text-xs text-gray-500">
                                     <i class="fas fa-info-circle mr-1"></i>
@@ -121,29 +121,29 @@
                             </div>
 
                             <div class="group">
-                                <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                                    <i class="fas fa-shield-alt text-cyan-600 mr-2"></i>
-                                    Konfirmasi Kata Sandi
+                                <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Konfirmasi Password
                                 </label>
                                 <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
                                     <input
                                         id="password_confirmation"
                                         v-model="form.password_confirmation"
                                         :type="showPasswordConfirmation ? 'text' : 'password'"
                                         autocomplete="new-password"
                                         required
-                                        placeholder="Ulangi kata sandi"
-                                        class="block w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-4 text-gray-900 placeholder-gray-500 shadow-sm focus:border-cyan-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-200 transition-all duration-300 text-sm"
+                                        placeholder="Konfirmasi password Anda"
+                                        class="block w-full rounded-xl border-2 border-gray-200 bg-gray-50 pl-12 pr-12 py-4 text-gray-900 placeholder-gray-500 shadow-sm focus:border-cyan-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-cyan-200 transition-all duration-300 text-sm"
                                     />
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-                                        <button
-                                            type="button"
-                                            @click="showPasswordConfirmation = !showPasswordConfirmation"
-                                            class="text-gray-400 hover:text-gray-600 transition-colors"
-                                        >
-                                            <i :class="showPasswordConfirmation ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="showPasswordConfirmation = !showPasswordConfirmation"
+                                        class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-cyan-600 focus:outline-none transition-colors duration-200 cursor-pointer z-20"
+                                    >
+                                        <i :class="showPasswordConfirmation ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -189,7 +189,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import AuthService from '../../services/AuthService.js';
+import toast from '../../utils/toast.js';
 
 export default {
     name: 'Register',
@@ -208,29 +209,101 @@ export default {
             errors: [],
         };
     },
+    mounted() {
+        // Redirect jika sudah login
+        if (AuthService.isAuthenticated()) {
+            this.$router.push('/dashboard');
+        }
+    },
     methods: {
         async handleSubmit() {
+            // Validasi form
+            if (!this.validateForm()) {
+                return;
+            }
+
             this.loading = true;
             this.errors = [];
 
             try {
-                const response = await axios.post('/register', this.form);
-                if (response.data.redirect) {
-                    window.location.href = response.data.redirect;
+                console.log('Starting dual registration...');
+                console.log('Form data:', {
+                    name: this.form.name,
+                    email: this.form.email,
+                    password: this.form.password ? '***' : 'empty',
+                    password_confirmation: this.form.password_confirmation ? '***' : 'empty'
+                });
+                
+                // Gunakan registerDual untuk register ke lokal dan remote sekaligus
+                const result = await AuthService.registerDual({
+                    name: this.form.name,
+                    email: this.form.email,
+                    password: this.form.password,
+                    password_confirmation: this.form.password_confirmation
+                });
+                
+                console.log('Registration result:', result);
+                
+                if (result.success) {
+                    // Tampilkan notifikasi sukses
+                    const message = result.remoteSuccess 
+                        ? 'Registrasi berhasil di sistem lokal dan API!' 
+                        : 'Registrasi berhasil di sistem lokal!';
+                    toast.success('Registrasi Berhasil!', message);
+                    
+                    // Redirect setelah delay singkat
+                    setTimeout(() => {
+                        this.$router.push('/dashboard');
+                    }, 1500);
                 } else {
-                    this.$router.push('/dashboard');
+                    // Tampilkan notifikasi error
+                    console.error('Registration failed:', result.message);
+                    toast.error('Registrasi Gagal', result.message);
+                    this.errors = [result.message];
                 }
             } catch (error) {
-                if (error.response?.data?.errors) {
-                    const errorData = error.response.data.errors;
-                    this.errors = Object.values(errorData).flat();
-                } else {
-                    this.errors = [error.response?.data?.message || 'Terjadi kesalahan saat registrasi'];
-                }
+                console.error('Register error:', error);
+                const errorMsg = 'Terjadi kesalahan saat registrasi. Silakan coba lagi.';
+                toast.error('Registrasi Gagal', errorMsg);
+                this.errors = [errorMsg];
             } finally {
                 this.loading = false;
             }
         },
+
+        validateForm() {
+            if (!this.form.name.trim()) {
+                toast.warning('Validasi', 'Silakan masukkan nama lengkap Anda.');
+                return false;
+            }
+
+            if (!this.form.email.trim()) {
+                toast.warning('Validasi', 'Silakan masukkan email Anda.');
+                return false;
+            }
+
+            if (!this.form.password.trim()) {
+                toast.warning('Validasi', 'Silakan masukkan password Anda.');
+                return false;
+            }
+
+            if (this.form.password.length < 8) {
+                toast.warning('Validasi', 'Password minimal 8 karakter.');
+                return false;
+            }
+
+            if (this.form.password !== this.form.password_confirmation) {
+                toast.warning('Validasi', 'Konfirmasi password tidak cocok.');
+                return false;
+            }
+
+            if (!this.form.terms) {
+                toast.warning('Validasi', 'Silakan setujui syarat dan ketentuan.');
+                return false;
+            }
+
+            return true;
+        }
     },
 };
 </script>

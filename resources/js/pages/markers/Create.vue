@@ -147,22 +147,7 @@
                         </div>
                     </form>
                 </div>
-
-                <!-- Map Preview -->
-                <div class="map-section">
-                    <div class="map-header">
-                        <h3>Map Preview</h3>
-                        <p>Click on the map to set marker location</p>
-                    </div>
-                    <div ref="mapContainer" class="map-container"></div>
-                    <div class="map-info">
-                        <div class="coordinate-display">
-                            <span>Lat: {{ form.latitude || '-' }}</span>
-                            <span>Lng: {{ form.longitude || '-' }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </div> 
         </div>
     </AppLayout>
 </template>
@@ -186,22 +171,10 @@ export default {
                 kategori_id: '',
                 latitude: null,
                 longitude: null,
-                icon: 'map-marker-alt',
+                icon: 'fas fa-map-marker-alt',
                 color: '#3b82f6'
             },
             categories: [],
-            regionData: {
-                provinsi: [],
-                kabupaten: [],
-                kecamatan: [],
-                desa: []
-            },
-            filteredKabupaten: [],
-            filteredKecamatan: [],
-            filteredDesa: [],
-            selectedProvinsi: '',
-            selectedKabupaten: '',
-            selectedKecamatan: '',
             map: null,
             marker: null,
             loading: false,
@@ -219,6 +192,38 @@ export default {
                 { class: 'fas fa-camera', name: 'Tourist Spot' },
                 { class: 'fas fa-car', name: 'Parking' }
             ],
+            availableLineStyles: [
+            { 
+                value: 'solid', 
+                name: 'Solid', 
+                dashArray: null,
+                preview: '━━━━━━━'
+            },
+            { 
+                value: 'dashed', 
+                name: 'Dashed', 
+                dashArray: '10, 10',
+                preview: '━ ━ ━ ━'
+            },
+            { 
+                value: 'dotted', 
+                name: 'Dotted', 
+                dashArray: '2, 8',
+                preview: '• • • • •'
+            },
+            { 
+                value: 'dashdot', 
+                name: 'Dash-Dot', 
+                dashArray: '10, 5, 2, 5',
+                preview: '━ • ━ •'
+            },
+            { 
+                value: 'longdash', 
+                name: 'Long Dash', 
+                dashArray: '20, 10',
+                preview: '━━ ━━ ━━'
+            }
+            ],
             availableColors: [
                 { value: '#3b82f6', name: 'Blue' },
                 { value: '#ef4444', name: 'Red' },
@@ -232,16 +237,18 @@ export default {
         }
     },
     async mounted() {
-        await this.loadRegionData();
         await this.loadCategories();
         this.initMap();
     },
-    methods: {
-        async loadRegionData() {
-            // Local backend doesn't need region data
-            // Keeping this method for compatibility, but it does nothing
-            console.log('Using local backend - no region data needed');
+    watch: {
+        'form.icon'() {
+            this.updateMapMarker();
         },
+        'form.color'() {
+            this.updateMapMarker();
+        }
+    },
+    methods: {
         async loadCategories() {
             try {
                 // Local backend categories
@@ -257,45 +264,6 @@ export default {
                 ];
             } catch (error) {
                 console.error('Error loading categories:', error);
-            }
-        },
-        onProvinsiChange() {
-            this.selectedKabupaten = '';
-            this.selectedKecamatan = '';
-            this.form.desa_id = '';
-            this.filteredDesa = [];
-            this.filteredKecamatan = [];
-            
-            if (this.selectedProvinsi) {
-                this.filteredKabupaten = this.regionData.kabupaten.filter(
-                    kab => kab.prov_id == this.selectedProvinsi
-                );
-            } else {
-                this.filteredKabupaten = [];
-            }
-        },
-        onKabupatenChange() {
-            this.selectedKecamatan = '';
-            this.form.desa_id = '';
-            this.filteredDesa = [];
-            
-            if (this.selectedKabupaten) {
-                this.filteredKecamatan = this.regionData.kecamatan.filter(
-                    kec => kec.kab_id == this.selectedKabupaten
-                );
-            } else {
-                this.filteredKecamatan = [];
-            }
-        },
-        onKecamatanChange() {
-            this.form.desa_id = '';
-            
-            if (this.selectedKecamatan) {
-                this.filteredDesa = this.regionData.desa.filter(
-                    desa => desa.kec_id == this.selectedKecamatan
-                );
-            } else {
-                this.filteredDesa = [];
             }
         },
         initMap() {
@@ -326,8 +294,34 @@ export default {
                         this.map.removeLayer(this.marker);
                     }
                     
-                    // Add new marker
-                    this.marker = L.marker([lat, lng]).addTo(this.map);
+                    // Create custom icon with selected color
+                    const customIcon = L.divIcon({
+                        className: 'custom-marker-icon',
+                        html: `<div style="
+                            background-color: ${this.form.color};
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50% 50% 50% 0;
+                            transform: rotate(-45deg);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border: 2px solid white;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                        ">
+                            <i class="${this.form.icon}" style="
+                                color: white;
+                                font-size: 14px;
+                                transform: rotate(45deg);
+                            "></i>
+                        </div>`,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 32],
+                        popupAnchor: [0, -32]
+                    });
+                    
+                    // Add new marker with custom icon
+                    this.marker = L.marker([lat, lng], { icon: customIcon }).addTo(this.map);
                     
                     // Center map on marker
                     this.map.setView([lat, lng], Math.max(this.map.getZoom(), 13));
@@ -363,17 +357,9 @@ export default {
                 kategori_id: '',
                 latitude: null,
                 longitude: null,
-                desa_id: '',
                 icon: 'fas fa-map-marker-alt',
                 color: '#3b82f6'
             };
-            
-            this.selectedProvinsi = '';
-            this.selectedKabupaten = '';
-            this.selectedKecamatan = '';
-            this.filteredKabupaten = [];
-            this.filteredKecamatan = [];
-            this.filteredDesa = [];
             
             if (this.marker) {
                 this.map.removeLayer(this.marker);

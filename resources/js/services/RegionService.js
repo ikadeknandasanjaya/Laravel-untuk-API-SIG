@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const REMOTE_API_URL = 'https://gisapis.manpits.xyz/api';
+import { REMOTE_API_URL } from '../config/api.js';
 
 class RegionService {
     
@@ -12,10 +11,26 @@ class RegionService {
     async getAllRegions() {
         try {
             const remoteToken = this.getRemoteToken();
+            
+            if (!remoteToken) {
+                console.warn('No remote token - API dosen not available. Using local data only.');
+                // Return empty data structure - aplikasi tetap bisa jalan dengan data lokal
+                return {
+                    success: true,
+                    data: {
+                        provinsi: [],
+                        kabupaten: [],
+                        kecamatan: [],
+                        desa: []
+                    },
+                    warning: 'API dosen tidak tersedia. Login dengan akun yang ter-register di API dosen untuk menggunakan fitur ini.'
+                };
+            }
+            
             console.log('RegionService: getAllRegions with token:', remoteToken?.substring(0, 20) + '...');
             
             // Call /mregion endpoint yang return semua data (provinsi, kabupaten, kecamatan, desa)
-            const headers = remoteToken ? { Authorization: `Bearer ${remoteToken}` } : {};
+            const headers = { Authorization: `Bearer ${remoteToken}` };
             const response = await axios.get(`${REMOTE_API_URL}/mregion`, { headers });
             
             if (response.data.status === 'success') {
@@ -33,9 +48,17 @@ class RegionService {
             }
         } catch (error) {
             console.error('getAllRegions error:', error.message);
+            // Return empty data dengan warning - aplikasi tetap bisa digunakan
             return {
                 success: false,
-                message: error.message || 'Failed to fetch regions'
+                data: {
+                    provinsi: [],
+                    kabupaten: [],
+                    kecamatan: [],
+                    desa: []
+                },
+                message: 'API dosen tidak tersedia. Gunakan data lokal.',
+                error: error.message
             };
         }
     }
